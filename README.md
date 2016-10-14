@@ -10,12 +10,12 @@ export GOPATH=$HOME/go # Go packages will be installed here from github
 export PATH=$PATH:$GOROOT/bin:$GOPATH/bin # Built Go files will go here
 ```
 
-## Deploy
-
-SSH into the server, and then go to `/var/www/duet/`.
-
-Run
+## Docker
+With docker installed, do
 ```
-sudo service nginx restart
-go run main.go
+cd go
+docker build -t duet-go .
+docker run -p 8080:8080 duet-go
 ```
+
+nginx should be configured to serve port 8080 to api.helloduet.com.
