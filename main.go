@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"net/http"
+
+  "github.com/graphql-go/graphql"
 )
 
 func handler(w http.ResponseWriter, r *http.Request) {

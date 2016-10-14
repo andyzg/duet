@@ -1,0 +1,66 @@
+{
+	"ImportPath": "github.com/andyzg/duet",
+	"GoVersion": "go1.7",
+	"GodepVersion": "v74",
+	"Deps": [
+		{
+			"ImportPath": "github.com/graphql-go/graphql",
+			"Comment": "v0.4.18-44-g8c31740",
+			"Rev": "8c317402d1b72dff3dd9008bad7e41d0ae96e3c6"
+		},
+		{
+			"ImportPath": "github.com/graphql-go/graphql/gqlerrors",
+			"Comment": "v0.4.18-44-g8c31740",
+			"Rev": "8c317402d1b72dff3dd9008bad7e41d0ae96e3c6"
+		},
+		{
+			"ImportPath": "github.com/graphql-go/graphql/language/ast",
+			"Comment": "v0.4.18-44-g8c31740",
+			"Rev": "8c317402d1b72dff3dd9008bad7e41d0ae96e3c6"
+		},
+		{
+			"ImportPath": "github.com/graphql-go/graphql/language/kinds",
+			"Comment": "v0.4.18-44-g8c31740",
+			"Rev": "8c317402d1b72dff3dd9008bad7e41d0ae96e3c6"
+		},
+		{
+			"ImportPath": "github.com/graphql-go/graphql/language/lexer",
+			"Comment": "v0.4.18-44-g8c31740",
+			"Rev": "8c317402d1b72dff3dd9008bad7e41d0ae96e3c6"
+		},
+		{
+			"ImportPath": "github.com/graphql-go/graphql/language/location",
+			"Comment": "v0.4.18-44-g8c31740",
+			"Rev": "8c317402d1b72dff3dd9008bad7e41d0ae96e3c6"
+		},
+		{
+			"ImportPath": "github.com/graphql-go/graphql/language/parser",
+			"Comment": "v0.4.18-44-g8c31740",
+			"Rev": "8c317402d1b72dff3dd9008bad7e41d0ae96e3c6"
+		},
+		{
+			"ImportPath": "github.com/graphql-go/graphql/language/printer",
+			"Comment": "v0.4.18-44-g8c31740",
+			"Rev": "8c317402d1b72dff3dd9008bad7e41d0ae96e3c6"
+		},
+		{
+			"ImportPath": "github.com/graphql-go/graphql/language/source",
+			"Comment": "v0.4.18-44-g8c31740",
+			"Rev": "8c317402d1b72dff3dd9008bad7e41d0ae96e3c6"
+		},
+		{
+			"ImportPath": "github.com/graphql-go/graphql/language/typeInfo",
+			"Comment": "v0.4.18-44-g8c31740",
+			"Rev": "8c317402d1b72dff3dd9008bad7e41d0ae96e3c6"
+		},
+		{
+			"ImportPath": "github.com/graphql-go/graphql/language/visitor",
+			"Comment": "v0.4.18-44-g8c31740",
+			"Rev": "8c317402d1b72dff3dd9008bad7e41d0ae96e3c6"
+		},
+		{
+			"ImportPath": "golang.org/x/net/context",
+			"Rev": "8b4af36cd21a1f85a7484b49feb7c79363106d8e"
+		}
+	]
+}
