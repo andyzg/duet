@@ -17,5 +17,12 @@ SSH into the server, and then go to `/var/www/duet/`.
 Run
 ```
 sudo service nginx restart
-go run main.go
+godep go run main.go
 ```
+
+## Updating Dependencies
+If new packages are installed, run
+```
+godep save
+```
+This saves the exact version of the dependency used.
