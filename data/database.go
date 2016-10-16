@@ -50,3 +50,7 @@ func AddTask(task *Task) {
 	task.Id = strconv.Itoa(len(tasks))
 	tasks[task.Id] = task
 }
+
+func DeleteTask(id string) {
+	delete(tasks, id)
+}

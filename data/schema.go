@@ -123,6 +123,30 @@ func init() {
 		},
 	}
 
+	deleteTaskMutation := &graphql.Field{
+		Type: graphql.NewObject(graphql.ObjectConfig{
+			Name: "removeTaskPayload",
+			Fields: graphql.Fields{
+				"deletedId": &graphql.Field{
+					Type: graphql.ID,
+					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+						return p.Source, nil
+					},
+				},
+			},
+		}),
+		Args: graphql.FieldConfigArgument{
+			"id": &graphql.ArgumentConfig{
+				Type: graphql.NewNonNull(graphql.ID),
+			},
+		},
+		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+			id, _ := p.Args["id"].(string)
+			DeleteTask(id)
+			return id, nil
+		},
+	}
+
 	queryType := graphql.NewObject(graphql.ObjectConfig{
 		Name: "RootQuery",
 		Fields: graphql.Fields{
@@ -134,7 +158,8 @@ func init() {
 	mutationType := graphql.NewObject(graphql.ObjectConfig{
 		Name: "RootMutation",
 		Fields: graphql.Fields{
-			"addTask": addTaskMutation,
+			"addTask":    addTaskMutation,
+			"deleteTask": deleteTaskMutation,
 		},
 	})
 
