@@ -65,42 +65,88 @@ func init() {
 		},
 	})
 
+	taskQuery := &graphql.Field{
+		Type: taskType,
+		Args: graphql.FieldConfigArgument{
+			"id": &graphql.ArgumentConfig{
+				Type:         graphql.ID,
+				DefaultValue: nil,
+			},
+		},
+		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+			idArg := p.Args["id"].(string)
+			if id, err := strconv.ParseInt(idArg, 10, 64); err == nil {
+				if id >= 0 && id < 2 {
+					return GetTask(id), nil
+				} else {
+					return nil, errors.New("Out of bounds")
+				}
+			} else {
+				return nil, err
+			}
+		},
+	}
+
+	tasksQuery := &graphql.Field{
+		Type: graphql.NewList(taskType),
+		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+			return GetTasks(), nil
+		},
+	}
+
+	addTaskMutation := &graphql.Field{
+		Type: taskType,
+		Args: graphql.FieldConfigArgument{
+			"title": &graphql.ArgumentConfig{
+				Type: graphql.NewNonNull(graphql.String),
+			},
+			"start_date": &graphql.ArgumentConfig{
+				Type: dateType,
+			},
+			"end_date": &graphql.ArgumentConfig{
+				Type: dateType,
+			},
+			"done": &graphql.ArgumentConfig{
+				Type: graphql.Boolean,
+			},
+		},
+		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+			title, _ := p.Args["title"].(string)
+			startDate, _ := p.Args["start_date"].(time.Time)
+			endDate, _ := p.Args["end_date"].(time.Time)
+			done, _ := p.Args["done"].(bool)
+
+			newTask := &Task{
+				Title:     title,
+				StartDate: startDate,
+				EndDate:   endDate,
+				Done:      done,
+			}
+
+			AddTask(newTask)
+			return newTask, nil
+		},
+	}
+
 	queryType := graphql.NewObject(graphql.ObjectConfig{
-		Name: "Query",
+		Name: "RootQuery",
 		Fields: graphql.Fields{
-			"task": &graphql.Field{
-				Type: taskType,
-				Args: map[string]*graphql.ArgumentConfig{
-					"id": &graphql.ArgumentConfig{
-						Type:         graphql.ID,
-						DefaultValue: nil,
-					},
-				},
-				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					idArg := p.Args["id"].(string)
-					if id, err := strconv.ParseInt(idArg, 10, 64); err == nil {
-						if id >= 0 && id < 2 {
-							return GetTask(id), nil
-						} else {
-							return nil, errors.New("Out of bounds")
-						}
-					} else {
-						return nil, err
-					}
-				},
-			},
-			"tasks": &graphql.Field{
-				Type: graphql.NewList(taskType),
-				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					return GetTasks(), nil
-				},
-			},
+			"task":  taskQuery,
+			"tasks": tasksQuery,
+		},
+	})
+
+	mutationType := graphql.NewObject(graphql.ObjectConfig{
+		Name: "RootMutation",
+		Fields: graphql.Fields{
+			"addTask": addTaskMutation,
 		},
 	})
 
 	var err error
 	Schema, err = graphql.NewSchema(graphql.SchemaConfig{
-		Query: queryType,
+		Query:    queryType,
+		Mutation: mutationType,
 	})
 	if err != nil {
 		panic(err)

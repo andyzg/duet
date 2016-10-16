@@ -40,3 +40,8 @@ func GetTask(id int64) *Task {
 func GetTasks() []*Task {
 	return tasks
 }
+
+func AddTask(task *Task) {
+	task.Id = int64(len(tasks))
+	tasks = append(tasks, task)
+}
