@@ -92,6 +92,9 @@ func init() {
 	addTaskMutation := &graphql.Field{
 		Type: taskType,
 		Args: graphql.FieldConfigArgument{
+			"id": &graphql.ArgumentConfig{
+				Type: graphql.NewNonNull(graphql.ID),
+			},
 			"title": &graphql.ArgumentConfig{
 				Type: graphql.NewNonNull(graphql.String),
 			},
@@ -147,6 +150,49 @@ func init() {
 		},
 	}
 
+	updateTaskMutation := &graphql.Field{
+		Type: taskType,
+		Args: graphql.FieldConfigArgument{
+			"id": &graphql.ArgumentConfig{
+				Type: graphql.ID,
+			},
+			"title": &graphql.ArgumentConfig{
+				Type: graphql.String,
+			},
+			"start_date": &graphql.ArgumentConfig{
+				Type: dateType,
+			},
+			"end_date": &graphql.ArgumentConfig{
+				Type: dateType,
+			},
+			"done": &graphql.ArgumentConfig{
+				Type: graphql.Boolean,
+			},
+		},
+		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+			id, _ := p.Args["id"].(string)
+			task := GetTask(id)
+			if task == nil {
+				return nil, nil
+			}
+
+			if title, ok := p.Args["title"].(string); ok {
+				task.Title = title
+			}
+			if startDate, ok := p.Args["start_date"].(time.Time); ok {
+				task.StartDate = startDate
+			}
+			if endDate, ok := p.Args["end_date"].(time.Time); ok {
+				task.EndDate = endDate
+			}
+			if done, ok := p.Args["done"].(bool); ok {
+				task.Done = done
+			}
+
+			return task, nil
+		},
+	}
+
 	queryType := graphql.NewObject(graphql.ObjectConfig{
 		Name: "RootQuery",
 		Fields: graphql.Fields{
@@ -160,6 +206,7 @@ func init() {
 		Fields: graphql.Fields{
 			"addTask":    addTaskMutation,
 			"deleteTask": deleteTaskMutation,
+			"updateTask": updateTaskMutation,
 		},
 	})
 
