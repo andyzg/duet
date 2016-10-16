@@ -1,7 +1,6 @@
 package data
 
 import (
-	"errors"
 	"strconv"
 	"time"
 
@@ -74,16 +73,8 @@ func init() {
 			},
 		},
 		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-			idArg := p.Args["id"].(string)
-			if id, err := strconv.ParseInt(idArg, 10, 64); err == nil {
-				if id >= 0 && id < 2 {
-					return GetTask(id), nil
-				} else {
-					return nil, errors.New("Out of bounds")
-				}
-			} else {
-				return nil, err
-			}
+			id := p.Args["id"].(string)
+			return GetTask(id), nil
 		},
 	}
 

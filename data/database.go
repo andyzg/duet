@@ -1,11 +1,12 @@
 package data
 
 import (
+	"strconv"
 	"time"
 )
 
 type Task struct {
-	Id        int64     `json:"id"`
+	Id        string    `json:"id"`
 	Title     string    `json:"title"`
 	StartDate time.Time `json:"start_date"`
 	EndDate   time.Time `json:"end_date"`
@@ -13,19 +14,19 @@ type Task struct {
 }
 
 type User struct {
-	Id int64 `json:"id"`
+	Id string `json:"id"`
 }
 
-var tasks = []*Task{
-	&Task{
-		Id:        0,
+var tasks = map[string]*Task{
+	"0": &Task{
+		Id:        "0",
 		Title:     "Get milk",
 		StartDate: time.Now(),
 		EndDate:   time.Now(),
 		Done:      false,
 	},
-	&Task{
-		Id:        1,
+	"1": &Task{
+		Id:        "1",
 		Title:     "Call my momma",
 		StartDate: time.Now(),
 		EndDate:   time.Now(),
@@ -33,15 +34,19 @@ var tasks = []*Task{
 	},
 }
 
-func GetTask(id int64) *Task {
+func GetTask(id string) *Task {
 	return tasks[id]
 }
 
 func GetTasks() []*Task {
-	return tasks
+	slice := make([]*Task, 0, len(tasks))
+	for _, v := range tasks {
+		slice = append(slice, v)
+	}
+	return slice
 }
 
 func AddTask(task *Task) {
-	task.Id = int64(len(tasks))
-	tasks = append(tasks, task)
+	task.Id = strconv.Itoa(len(tasks))
+	tasks[task.Id] = task
 }
