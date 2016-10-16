@@ -36,3 +36,7 @@ var tasks = []*Task{
 func GetTask(id int64) *Task {
 	return tasks[id]
 }
+
+func GetTasks() []*Task {
+	return tasks
+}

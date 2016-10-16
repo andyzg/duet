@@ -89,6 +89,12 @@ func init() {
 					}
 				},
 			},
+			"tasks": &graphql.Field{
+				Type: graphql.NewList(taskType),
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					return GetTasks(), nil
+				},
+			},
 		},
 	})
 
