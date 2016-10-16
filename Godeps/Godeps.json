@@ -59,6 +59,10 @@
 			"Rev": "8c317402d1b72dff3dd9008bad7e41d0ae96e3c6"
 		},
 		{
+			"ImportPath": "github.com/graphql-go/handler",
+			"Rev": "52e6de4fccd785952dce42265f316acd43a3053f"
+		},
+		{
 			"ImportPath": "golang.org/x/net/context",
 			"Rev": "8b4af36cd21a1f85a7484b49feb7c79363106d8e"
 		}
