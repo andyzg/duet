@@ -1,6 +1,7 @@
 package data
 
 import (
+	"errors"
 	"strconv"
 	"time"
 
@@ -15,7 +16,7 @@ var Schema graphql.Schema
 
 func init() {
 	dateType = graphql.NewScalar(graphql.ScalarConfig{
-		Name:        "date",
+		Name:        "Date",
 		Description: "Date and time",
 		Serialize: func(t interface{}) interface{} {
 			switch t := t.(type) {
@@ -46,6 +47,9 @@ func init() {
 		Name:        "Task",
 		Description: "A TODO task",
 		Fields: graphql.Fields{
+			"id": &graphql.Field{
+				Type: graphql.ID,
+			},
 			"title": &graphql.Field{
 				Type: graphql.String,
 			},
@@ -66,8 +70,23 @@ func init() {
 		Fields: graphql.Fields{
 			"task": &graphql.Field{
 				Type: taskType,
+				Args: map[string]*graphql.ArgumentConfig{
+					"id": &graphql.ArgumentConfig{
+						Type:         graphql.ID,
+						DefaultValue: nil,
+					},
+				},
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					return GetTask(0), nil
+					idArg := p.Args["id"].(string)
+					if id, err := strconv.ParseInt(idArg, 10, 64); err == nil {
+						if id >= 0 && id < 2 {
+							return GetTask(id), nil
+						} else {
+							return nil, errors.New("Out of bounds")
+						}
+					} else {
+						return nil, err
+					}
 				},
 			},
 		},
