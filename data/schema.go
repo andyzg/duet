@@ -92,9 +92,6 @@ func init() {
 	addTaskMutation := &graphql.Field{
 		Type: taskType,
 		Args: graphql.FieldConfigArgument{
-			"id": &graphql.ArgumentConfig{
-				Type: graphql.NewNonNull(graphql.ID),
-			},
 			"title": &graphql.ArgumentConfig{
 				Type: graphql.NewNonNull(graphql.String),
 			},
