@@ -12,6 +12,18 @@ export PATH=$PATH:$GOROOT/bin:$GOPATH/bin # Built Go files will go here
 
 Also install `godep` by running `go get github.com/tools/godep`.
 
+Install postgres and create a database using `createdb duet`. Install the migration tool:
+```
+go get lib/pq
+go get github.com/mattes/migrate/
+```
+
+## Database Migration
+Upgrade the database using
+```
+migrate -url postgres://duet@localhost:5432/duet?sslmode=disable -path ./data/migrations up
+```
+
 ## Deploy
 Make sure this repository is in your `GOPATH` then run
 ```
