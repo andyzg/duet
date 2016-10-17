@@ -10,6 +10,7 @@ import (
 )
 
 func main() {
+	data.InitDatabase()
 	h := handler.New(&handler.Config{
 		Schema: &data.Schema,
 		Pretty: true,
