@@ -63,6 +63,10 @@
 			"Rev": "52e6de4fccd785952dce42265f316acd43a3053f"
 		},
 		{
+			"ImportPath": "github.com/mnmtanish/go-graphiql",
+			"Rev": "cef5a61bd62b996aa67029c6c858f673d6e51718"
+		},
+		{
 			"ImportPath": "golang.org/x/net/context",
 			"Rev": "8b4af36cd21a1f85a7484b49feb7c79363106d8e"
 		}
