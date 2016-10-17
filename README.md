@@ -17,17 +17,6 @@ Install postgres. Now create a database and enable the `uuid-ossp` extension:
 createdb duet
 psql -d duet --command='CREATE EXTENSION "uuid-ossp"'
 ```
-Install the migration tool:
-```
-go get lib/pq
-go get github.com/mattes/migrate/
-```
-
-## Database Migration
-Upgrade the database using
-```
-migrate -url postgres://duet@localhost:5432/duet?sslmode=disable -path ./data/migrations up
-```
 
 ## Deploy
 Make sure this repository is in your `GOPATH` then run
