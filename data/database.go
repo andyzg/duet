@@ -20,24 +20,6 @@ type User struct {
 	Id string `json:"id" gorm:"primary_key;type:uuid;default:uuid_generate_v4()"`
 }
 
-// TODO remove
-var tasks = map[string]*Task{
-	"0": &Task{
-		Id:        "0",
-		Title:     "Get milk",
-		StartDate: time.Now(),
-		EndDate:   time.Now(),
-		Done:      false,
-	},
-	"1": &Task{
-		Id:        "1",
-		Title:     "Call my momma",
-		StartDate: time.Now(),
-		EndDate:   time.Now(),
-		Done:      true,
-	},
-}
-
 var db *gorm.DB
 
 func InitDatabase() {
@@ -54,20 +36,19 @@ func CloseDatabase() {
 }
 
 func GetTask(id string) *Task {
-	return tasks[id]
+	var task Task
+	db.Where(&User{Id: id}).First(&task) // TODO check status
+	return &task
 }
 
-func GetTasks() []*Task {
-	slice := make([]*Task, 0, len(tasks))
-	for _, v := range tasks {
-		slice = append(slice, v)
-	}
-	return slice
+func GetTasks() []Task {
+	var tasks []Task
+	db.Find(&tasks)
+	return tasks
 }
 
 func AddTask(task *Task) {
 	db.Create(task) // TODO check status
-	tasks[task.Id] = task
 }
 
 func DeleteTask(id string) {
@@ -75,5 +56,12 @@ func DeleteTask(id string) {
 		Id: id,
 	}
 	db.Delete(task) // TODO check status
-	delete(tasks, id)
+}
+
+func UpdateTask(id string, attrs map[string]interface{}) *Task {
+	task := Task{
+		Id: id,
+	}
+	db.Model(&task).Updates(attrs) // TODO check status
+	return &task
 }

@@ -173,24 +173,23 @@ func init() {
 		},
 		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 			id, _ := p.Args["id"].(string)
-			task := GetTask(id)
-			if task == nil {
-				return nil, nil
-			}
+
+			attrs := make(map[string]interface{})
 
 			if title, ok := p.Args["title"].(string); ok {
-				task.Title = title
+				attrs["title"] = title
 			}
 			if startDate, ok := p.Args["start_date"].(time.Time); ok {
-				task.StartDate = startDate
+				attrs["start_date"] = startDate
 			}
 			if endDate, ok := p.Args["end_date"].(time.Time); ok {
-				task.EndDate = endDate
+				attrs["end_date"] = endDate
 			}
 			if done, ok := p.Args["done"].(bool); ok {
-				task.Done = done
+				attrs["done"] = done
 			}
 
+			task := UpdateTask(id, attrs)
 			return task, nil
 		},
 	}
