@@ -92,6 +92,9 @@ func init() {
 	addTaskMutation := &graphql.Field{
 		Type: taskType,
 		Args: graphql.FieldConfigArgument{
+			"id": &graphql.ArgumentConfig{
+				Type: graphql.ID,
+			},
 			"title": &graphql.ArgumentConfig{
 				Type: graphql.NewNonNull(graphql.String),
 			},
@@ -106,12 +109,14 @@ func init() {
 			},
 		},
 		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+			id, _ := p.Args["id"].(string)
 			title, _ := p.Args["title"].(string)
 			startDate, _ := p.Args["start_date"].(time.Time)
 			endDate, _ := p.Args["end_date"].(time.Time)
 			done, _ := p.Args["done"].(bool)
 
 			newTask := &Task{
+				Id:        id,
 				Title:     title,
 				StartDate: startDate,
 				EndDate:   endDate,

@@ -11,6 +11,7 @@ import (
 
 func main() {
 	data.InitDatabase()
+	defer data.CloseDatabase()
 	h := handler.New(&handler.Config{
 		Schema: &data.Schema,
 		Pretty: true,
