@@ -12,7 +12,12 @@ export PATH=$PATH:$GOROOT/bin:$GOPATH/bin # Built Go files will go here
 
 Also install `godep` by running `go get github.com/tools/godep`.
 
-Install postgres and create a database using `createdb duet`. Install the migration tool:
+Install postgres. Now create a database and enable the `uuid-ossp` extension:
+```
+createdb duet
+psql -d duet --command='CREATE EXTENSION "uuid-ossp"'
+```
+Install the migration tool:
 ```
 go get lib/pq
 go get github.com/mattes/migrate/
