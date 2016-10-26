@@ -74,8 +74,12 @@ func init() {
 		},
 		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 			id := p.Args["id"].(string)
+			task, err := GetTask(id)
+			if err != nil {
+				return nil, err
+			}
 			// Type of the nil matters apparently
-			if task := GetTask(id); task != nil {
+			if task != nil {
 				return task, nil
 			}
 			return nil, nil

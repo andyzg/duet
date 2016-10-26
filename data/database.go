@@ -35,10 +35,12 @@ func CloseDatabase() {
 	db.Close()
 }
 
-func GetTask(id string) *Task {
+func GetTask(id string) (*Task, error) {
 	var task Task
-	db.Where(&User{Id: id}).First(&task) // TODO check status
-	return &task
+	if err := db.Where(&User{Id: id}).First(&task).Error; err != nil {
+		return nil, err
+	}
+	return &task, nil
 }
 
 func GetTasks() []Task {
