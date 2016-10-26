@@ -1,19 +1,17 @@
 package data
 
 import (
-	"time"
-
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
+	"github.com/lib/pq"
 )
 
-// TODO: Fix null dates
 type Task struct {
-	Id        string    `json:"id" gorm:"primary_key;type:uuid;default:uuid_generate_v4()"`
-	Title     string    `json:"title" gorm:"not_null"`
-	StartDate time.Time `json:"start_date"`
-	EndDate   time.Time `json:"end_date"`
-	Done      bool      `json:"done" gorm:"not_null;default:false"`
+	Id        string      `json:"id" gorm:"primary_key;type:uuid;default:uuid_generate_v4()"`
+	Title     string      `json:"title" gorm:"not_null"`
+	StartDate pq.NullTime `json:"start_date"`
+	EndDate   pq.NullTime `json:"end_date"`
+	Done      bool        `json:"done" gorm:"not_null;default:false"`
 }
 
 type User struct {

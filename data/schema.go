@@ -6,6 +6,7 @@ import (
 
 	"github.com/graphql-go/graphql"
 	"github.com/graphql-go/graphql/language/ast"
+	"github.com/lib/pq"
 )
 
 var taskType *graphql.Object
@@ -19,26 +20,34 @@ func init() {
 		Description: "Date and time",
 		Serialize: func(t interface{}) interface{} {
 			switch t := t.(type) {
-			case time.Time:
-				return t.Unix()
+			case pq.NullTime:
+				if t.Valid {
+					return t.Time.Unix()
+				}
 			}
-			return 0
+			return nil
 		},
 		ParseValue: func(unix interface{}) interface{} {
 			switch unix := unix.(type) {
 			case int64:
-				return time.Unix(unix, 0)
+				return pq.NullTime{
+					Time:  time.Unix(unix, 0),
+					Valid: true,
+				}
 			}
-			return nil
+			return pq.NullTime{Valid: false}
 		},
 		ParseLiteral: func(valueAST ast.Value) interface{} {
 			switch valueAST := valueAST.(type) {
 			case *ast.IntValue:
 				if intValue, err := strconv.ParseInt(valueAST.Value, 10, 32); err == nil {
-					return time.Unix(intValue, 0)
+					return pq.NullTime{
+						Time:  time.Unix(intValue, 0),
+						Valid: true,
+					}
 				}
 			}
-			return nil
+			return pq.NullTime{Valid: false}
 		},
 	})
 
@@ -115,8 +124,8 @@ func init() {
 		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 			id, _ := p.Args["id"].(string)
 			title, _ := p.Args["title"].(string)
-			startDate, _ := p.Args["start_date"].(time.Time)
-			endDate, _ := p.Args["end_date"].(time.Time)
+			startDate, _ := p.Args["start_date"].(pq.NullTime)
+			endDate, _ := p.Args["end_date"].(pq.NullTime)
 			done, _ := p.Args["done"].(bool)
 
 			newTask := &Task{
