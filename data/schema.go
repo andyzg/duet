@@ -89,7 +89,7 @@ func init() {
 	tasksQuery := &graphql.Field{
 		Type: graphql.NewList(taskType),
 		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-			return GetTasks(), nil
+			return GetTasks()
 		},
 	}
 
@@ -127,7 +127,9 @@ func init() {
 				Done:      done,
 			}
 
-			AddTask(newTask)
+			if err := AddTask(newTask); err != nil {
+				return nil, err
+			}
 			return newTask, nil
 		},
 	}
@@ -151,7 +153,13 @@ func init() {
 		},
 		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 			id, _ := p.Args["id"].(string)
-			DeleteTask(id)
+			taskDeleted, err := DeleteTask(id)
+			if err != nil {
+				return nil, err
+			}
+			if !taskDeleted {
+				return nil, nil
+			}
 			return id, nil
 		},
 	}
@@ -193,8 +201,7 @@ func init() {
 				attrs["done"] = done
 			}
 
-			task := UpdateTask(id, attrs)
-			return task, nil
+			return UpdateTask(id, attrs)
 		},
 	}
 

@@ -43,27 +43,41 @@ func GetTask(id string) (*Task, error) {
 	return &task, nil
 }
 
-func GetTasks() []Task {
+func GetTasks() ([]Task, error) {
 	var tasks []Task
-	db.Find(&tasks)
-	return tasks
+	if err := db.Find(&tasks).Error; err != nil {
+		return nil, err
+	}
+	return tasks, nil
 }
 
-func AddTask(task *Task) {
-	db.Create(task) // TODO check status
+func AddTask(task *Task) error {
+	return db.Create(task).Error
 }
 
-func DeleteTask(id string) {
+// Deletes the task with the given ID and returns whether a row was deleted.
+func DeleteTask(id string) (bool, error) {
 	task := &Task{
 		Id: id,
 	}
-	db.Delete(task) // TODO check status
+	result := db.Delete(task)
+	if err := result.Error; err != nil {
+		return false, err
+	}
+	return result.RowsAffected > 0, nil
 }
 
-func UpdateTask(id string, attrs map[string]interface{}) *Task {
+// Updates a task with the given attributes and returns the updated Task if one exists for the ID.
+func UpdateTask(id string, attrs map[string]interface{}) (*Task, error) {
 	task := Task{
 		Id: id,
 	}
-	db.Model(&task).Updates(attrs) // TODO check status
-	return &task
+	result := db.Model(&task).Updates(attrs)
+	if err := result.Error; err != nil {
+		return nil, err
+	}
+	if result.RowsAffected == 0 {
+		return nil, nil
+	}
+	return &task, nil
 }
