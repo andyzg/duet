@@ -6,7 +6,6 @@ import (
 
 	"github.com/andyzg/duet/data"
 	"github.com/ant0ine/go-json-rest/rest"
-	// "github.com/dgrijalva/jwt-go"
 	"github.com/graphql-go/handler"
 	"github.com/mnmtanish/go-graphiql"
 )
