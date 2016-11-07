@@ -4,6 +4,8 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/lib/pq"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 type Task struct {
@@ -15,10 +17,14 @@ type Task struct {
 }
 
 type User struct {
-	Id string `json:"id" gorm:"primary_key;type:uuid;default:uuid_generate_v4()"`
+	Id             string `json:"id" gorm:"primary_key auto_increment"`
+	Username       string `gorm:"not_null unique"`
+	HashedPassword []byte `gorm:"not_null"`
 }
 
 var db *gorm.DB
+
+var bcryptCost int = 10
 
 func InitDatabase() {
 	var err error
@@ -78,4 +84,22 @@ func UpdateTask(id string, attrs map[string]interface{}) (*Task, error) {
 		return nil, nil
 	}
 	return &task, nil
+}
+
+func AddUser(username string, password string) (*User, error) {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcryptCost)
+	if err != nil {
+		return nil, err
+	}
+
+	user := &User{
+		Username:       username,
+		HashedPassword: hashedPassword,
+	}
+
+	err = db.Create(user).Error
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
 }
