@@ -24,6 +24,7 @@ func main() {
 
 	restRouter, err := rest.MakeRouter(
 		rest.Post("/login", data.ServeLogin),
+		rest.Post("/signup", data.ServeCreateUser),
 		rest.Get("/verify", data.ServeVerifyToken),
 	)
 	if err != nil {

@@ -8,6 +8,8 @@ import (
 
 	"github.com/ant0ine/go-json-rest/rest"
 	"github.com/dgrijalva/jwt-go"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 type usernameAndPassword struct {
@@ -20,6 +22,41 @@ type DuetClaims struct {
 }
 
 var tokenSecret []byte = []byte("someSecret")
+
+func createUser(username string, password string) (*User, error) {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcryptCost)
+	if err != nil {
+		return nil, err
+	}
+
+	user := &User{
+		Username:       username,
+		HashedPassword: hashedPassword,
+	}
+
+	err = AddUser(user)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
+func ServeCreateUser(w rest.ResponseWriter, r *rest.Request) {
+	userAndPass := usernameAndPassword{}
+	err := r.DecodeJsonPayload(&userAndPass)
+	if err != nil {
+		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	user, err := createUser(userAndPass.Username, userAndPass.Password)
+	if err != nil {
+		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteJson(user)
+}
 
 func ServeLogin(w rest.ResponseWriter, r *rest.Request) {
 	userAndPass := usernameAndPassword{}
