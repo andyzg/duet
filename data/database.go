@@ -16,8 +16,8 @@ type Task struct {
 
 type User struct {
 	Id             string `json:"id" gorm:"primary_key;type:uuid;default:uuid_generate_v4()"`
-	Username       string `gorm:"not_null;unique"`
-	HashedPassword []byte `gorm:"not_null"`
+	Username       string `json:"username" gorm:"not_null;unique"`
+	HashedPassword []byte `json:"-" gorm:"not_null"`
 }
 
 var db *gorm.DB

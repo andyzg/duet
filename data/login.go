@@ -70,11 +70,13 @@ func ServeLogin(w rest.ResponseWriter, r *rest.Request) {
 
 	user, err := GetUserByUsername(userAndPass.Username)
 	if err != nil {
+		// TODO don't leak info
 		rest.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
 	err = bcrypt.CompareHashAndPassword(user.HashedPassword, []byte(userAndPass.Password))
 	if err != nil {
+		// TODO don't leak info
 		rest.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
