@@ -22,8 +22,6 @@ type User struct {
 
 var db *gorm.DB
 
-var bcryptCost int = 10
-
 func InitDatabase() {
 	var err error
 	db, err = gorm.Open("postgres", "host=localhost user=duet DB.name=duet sslmode=disable")
@@ -86,4 +84,24 @@ func UpdateTask(id string, attrs map[string]interface{}) (*Task, error) {
 
 func AddUser(user *User) error {
 	return db.Create(user).Error
+}
+
+func GetUserById(id string) (*User, error) {
+	user := &User{
+		Id: id,
+	}
+	if err := db.Where(user).First(user).Error; err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
+func GetUserByUsername(username string) (*User, error) {
+	user := &User{
+		Username: username,
+	}
+	if err := db.Where(user).First(user).Error; err != nil {
+		return nil, err
+	}
+	return user, nil
 }

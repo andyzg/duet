@@ -23,6 +23,8 @@ type DuetClaims struct {
 
 var tokenSecret []byte = []byte("someSecret")
 
+var bcryptCost int = 10
+
 func createUser(username string, password string) (*User, error) {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcryptCost)
 	if err != nil {
@@ -66,7 +68,17 @@ func ServeLogin(w rest.ResponseWriter, r *rest.Request) {
 		return
 	}
 
-	// TODO verify password
+	user, err := GetUserByUsername(userAndPass.Username)
+	if err != nil {
+		rest.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+	err = bcrypt.CompareHashAndPassword(user.HashedPassword, []byte(userAndPass.Password))
+	if err != nil {
+		rest.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+
 	log.Printf("Username: %s, Password: %s\n", userAndPass.Username, userAndPass.Password)
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, DuetClaims{
