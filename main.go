@@ -22,7 +22,10 @@ func main() {
 	restApi := rest.NewApi()
 	restApi.Use(rest.DefaultDevStack...)
 
-	restRouter, err := rest.MakeRouter(rest.Post("/login", data.ServeLogin))
+	restRouter, err := rest.MakeRouter(
+		rest.Post("/login", data.ServeLogin),
+		rest.Get("/verify", data.ServeVerifyToken),
+	)
 	if err != nil {
 		log.Fatalf("rest.MakeRouter failed, %v", err)
 	}
