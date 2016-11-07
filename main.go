@@ -5,6 +5,8 @@ import (
 	"net/http"
 
 	"github.com/andyzg/duet/data"
+	"github.com/ant0ine/go-json-rest/rest"
+	// "github.com/dgrijalva/jwt-go"
 	"github.com/graphql-go/handler"
 	"github.com/mnmtanish/go-graphiql"
 )
@@ -12,14 +14,26 @@ import (
 func main() {
 	data.InitDatabase()
 	defer data.CloseDatabase()
-	h := handler.New(&handler.Config{
+
+	graphqlHandler := handler.New(&handler.Config{
 		Schema: &data.Schema,
 		Pretty: true,
 	})
-	http.Handle("/graphql", h)
-	http.HandleFunc("/", graphiql.ServeGraphiQL)
 
-	err := http.ListenAndServe(":8080", nil)
+	restApi := rest.NewApi()
+	restApi.Use(rest.DefaultDevStack...)
+
+	restRouter, err := rest.MakeRouter(rest.Post("/login", data.ServeLogin))
+	if err != nil {
+		log.Fatalf("rest.MakeRouter failed, %v", err)
+	}
+	restApi.SetApp(restRouter)
+
+	http.HandleFunc("/", graphiql.ServeGraphiQL)
+	http.Handle("/rest/", http.StripPrefix("/rest", restApi.MakeHandler()))
+	http.Handle("/graphql", graphqlHandler)
+
+	err = http.ListenAndServe(":8080", nil)
 	if err != nil {
 		log.Fatalf("ListenAndServe failed, %v", err)
 	}
