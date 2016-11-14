@@ -73,9 +73,10 @@ func AddTask(task *Task, userId string) error {
 // Deletes the task with the given ID and returns whether a row was deleted.
 func DeleteTask(taskId string, userId string) (bool, error) {
 	task := Task{
-		Id: taskId,
+		Id:     taskId,
+		UserId: userId,
 	}
-	result := db.Model(&User{Id: userId}).Related(&task).Delete(&task)
+	result := db.Where(&task).Delete(&task)
 	if err := result.Error; err != nil {
 		return false, err
 	}
@@ -85,10 +86,9 @@ func DeleteTask(taskId string, userId string) (bool, error) {
 // Updates a task with the given attributes and returns the updated Task if one exists for the ID.
 func UpdateTask(taskId string, userId string, attrs map[string]interface{}) (*Task, error) {
 	task := Task{
-		Id:     taskId,
-		UserId: userId,
+		Id: taskId,
 	}
-	result := db.Model(&task).Updates(attrs)
+	result := db.Model(&task).Where("user_id = ?", userId).Updates(attrs)
 	if err := result.Error; err != nil {
 		return nil, err
 	}
