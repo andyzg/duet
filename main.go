@@ -6,7 +6,7 @@ import (
 
 	"github.com/andyzg/duet/data"
 	"github.com/ant0ine/go-json-rest/rest"
-	"github.com/graphql-go/handler"
+	"github.com/gabrielwong/graphql-go-handler"
 	"github.com/mnmtanish/go-graphiql"
 )
 
@@ -17,6 +17,7 @@ func main() {
 	graphqlHandler := handler.New(&handler.Config{
 		Schema: &data.Schema,
 		Pretty: true,
+		Log:    true,
 	})
 
 	restApi := rest.NewApi()
