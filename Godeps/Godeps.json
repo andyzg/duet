@@ -107,10 +107,6 @@
 			"Rev": "ae8357db35d721c58dcdc911318b55bef6b1b001"
 		},
 		{
-			"ImportPath": "github.com/mnmtanish/go-graphiql",
-			"Rev": "cef5a61bd62b996aa67029c6c858f673d6e51718"
-		},
-		{
 			"ImportPath": "golang.org/x/crypto/bcrypt",
 			"Rev": "9477e0b78b9ac3d0b03822fd95422e2fe07627cd"
 		},

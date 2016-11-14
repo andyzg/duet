@@ -1,23 +1,33 @@
 package data
 
 import (
+	"time"
+
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
-	"github.com/lib/pq"
 )
 
+type noIdModel struct {
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt *time.Time
+}
+
 type Task struct {
-	Id        string      `json:"id" gorm:"primary_key;type:uuid;default:uuid_generate_v4()"`
-	Title     string      `json:"title" gorm:"not_null"`
-	StartDate pq.NullTime `json:"start_date"`
-	EndDate   pq.NullTime `json:"end_date"`
-	Done      bool        `json:"done" gorm:"not_null;default:false"`
+	noIdModel
+	Id        string     `json:"id" gorm:"primary_key;type:uuid;default:uuid_generate_v4()"`
+	Title     string     `json:"title" gorm:"not_null"`
+	StartDate *time.Time `json:"start_date"`
+	EndDate   *time.Time `json:"end_date"`
+	Done      bool       `json:"done" gorm:"not_null;default:false"`
 }
 
 type User struct {
+	noIdModel
 	Id             string `json:"id" gorm:"primary_key;type:uuid;default:uuid_generate_v4()"`
 	Username       string `json:"username" gorm:"not_null;unique"`
 	HashedPassword []byte `json:"-" gorm:"not_null"`
+	Tasks          []Task `json:"-"`
 }
 
 var db *gorm.DB
