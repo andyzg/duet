@@ -40,7 +40,7 @@ func main() {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
 		}
-		context.WithValue(ctx, data.UserIdKey, userId)
+		ctx = context.WithValue(ctx, data.UserIdKey, userId)
 
 		graphqlHandler.ContextHandler(ctx, w, r)
 	})

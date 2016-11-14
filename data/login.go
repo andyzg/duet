@@ -148,5 +148,5 @@ func AuthUserId(tokenString string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return claims.Id, nil
+	return claims.Subject, nil
 }

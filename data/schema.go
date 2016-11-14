@@ -1,6 +1,7 @@
 package data
 
 import (
+	"log"
 	"strconv"
 	"time"
 
@@ -14,6 +15,12 @@ var dateType *graphql.Scalar
 var Schema graphql.Schema
 
 var UserIdKey string = "user_id"
+
+func userIdOfContext(p graphql.ResolveParams) string {
+	id := p.Context.Value(UserIdKey).(string)
+	log.Printf("Got from context user id \"%s\"\n", id)
+	return id
+}
 
 func init() {
 	dateType = graphql.NewScalar(graphql.ScalarConfig{
@@ -86,7 +93,7 @@ func init() {
 		},
 		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 			id := p.Args["id"].(string)
-			task, err := GetTask(id)
+			task, err := GetTask(id, userIdOfContext(p))
 			if err != nil {
 				return nil, err
 			}
@@ -101,7 +108,7 @@ func init() {
 	tasksQuery := &graphql.Field{
 		Type: graphql.NewList(taskType),
 		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-			return GetTasks()
+			return GetTasks(userIdOfContext(p))
 		},
 	}
 
@@ -139,7 +146,7 @@ func init() {
 				Done:      done,
 			}
 
-			if err := AddTask(newTask); err != nil {
+			if err := AddTask(newTask, userIdOfContext(p)); err != nil {
 				return nil, err
 			}
 			return newTask, nil
@@ -165,7 +172,7 @@ func init() {
 		},
 		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 			id, _ := p.Args["id"].(string)
-			taskDeleted, err := DeleteTask(id)
+			taskDeleted, err := DeleteTask(id, userIdOfContext(p))
 			if err != nil {
 				return nil, err
 			}
@@ -213,7 +220,7 @@ func init() {
 				attrs["done"] = done
 			}
 
-			return UpdateTask(id, attrs)
+			return UpdateTask(id, userIdOfContext(p), attrs)
 		},
 	}
 

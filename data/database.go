@@ -1,6 +1,7 @@
 package data
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/jinzhu/gorm"
@@ -20,6 +21,7 @@ type Task struct {
 	StartDate *time.Time `json:"start_date"`
 	EndDate   *time.Time `json:"end_date"`
 	Done      bool       `json:"done" gorm:"not_null;default:false"`
+	UserId    string     `json:"user_id" gorm:"not_null;type:uuid"`
 }
 
 type User struct {
@@ -27,7 +29,7 @@ type User struct {
 	Id             string `json:"id" gorm:"primary_key;type:uuid;default:uuid_generate_v4()"`
 	Username       string `json:"username" gorm:"not_null;unique"`
 	HashedPassword []byte `json:"-" gorm:"not_null"`
-	Tasks          []Task `json:"-"`
+	Tasks          []Task `json:"-" gorm:"ForeignKey:UserId"`
 }
 
 var db *gorm.DB
@@ -45,32 +47,35 @@ func CloseDatabase() {
 	db.Close()
 }
 
-func GetTask(id string) (*Task, error) {
-	var task Task
-	if err := db.Where(&User{Id: id}).First(&task).Error; err != nil {
+func GetTask(taskId string, userId string) (*Task, error) {
+	task := Task{
+		Id: taskId,
+	}
+	if err := db.Model(&User{Id: userId}).Related(&task).First(&task).Error; err != nil {
 		return nil, err
 	}
 	return &task, nil
 }
 
-func GetTasks() ([]Task, error) {
+func GetTasks(userId string) ([]Task, error) {
 	var tasks []Task
-	if err := db.Find(&tasks).Error; err != nil {
+	if err := db.Model(&User{Id: userId}).Related(&tasks).Error; err != nil {
 		return nil, err
 	}
 	return tasks, nil
 }
 
-func AddTask(task *Task) error {
+func AddTask(task *Task, userId string) error {
+	task.UserId = userId
 	return db.Create(task).Error
 }
 
 // Deletes the task with the given ID and returns whether a row was deleted.
-func DeleteTask(id string) (bool, error) {
-	task := &Task{
-		Id: id,
+func DeleteTask(taskId string, userId string) (bool, error) {
+	task := Task{
+		Id: taskId,
 	}
-	result := db.Delete(task)
+	result := db.Model(&User{Id: userId}).Related(&task).Delete(&task)
 	if err := result.Error; err != nil {
 		return false, err
 	}
@@ -78,16 +83,17 @@ func DeleteTask(id string) (bool, error) {
 }
 
 // Updates a task with the given attributes and returns the updated Task if one exists for the ID.
-func UpdateTask(id string, attrs map[string]interface{}) (*Task, error) {
+func UpdateTask(taskId string, userId string, attrs map[string]interface{}) (*Task, error) {
 	task := Task{
-		Id: id,
+		Id:     taskId,
+		UserId: userId,
 	}
 	result := db.Model(&task).Updates(attrs)
 	if err := result.Error; err != nil {
 		return nil, err
 	}
 	if result.RowsAffected == 0 {
-		return nil, nil
+		return nil, fmt.Errorf("Task ID \"%s\" does not exist for user \"%s\"", taskId, userId)
 	}
 	return &task, nil
 }
