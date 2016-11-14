@@ -28,16 +28,24 @@ func init() {
 			return nil
 		},
 		ParseValue: func(unix interface{}) interface{} {
+			// Variables are parsed by graphql-go-hander and passed as a map
+			// It parses ints as a float64 but we keep int64 for completeness
 			switch unix := unix.(type) {
 			case int64:
 				return pq.NullTime{
 					Time:  time.Unix(unix, 0),
 					Valid: true,
 				}
+			case float64:
+				return pq.NullTime{
+					Time:  time.Unix(int64(unix), 0),
+					Valid: true,
+				}
 			}
 			return pq.NullTime{Valid: false}
 		},
 		ParseLiteral: func(valueAST ast.Value) interface{} {
+			// This is when the value is part of the query
 			switch valueAST := valueAST.(type) {
 			case *ast.IntValue:
 				if intValue, err := strconv.ParseInt(valueAST.Value, 10, 32); err == nil {
