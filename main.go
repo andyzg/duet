@@ -3,11 +3,13 @@ package main
 import (
 	"log"
 	"net/http"
+	"strings"
+	"time"
 
 	"github.com/andyzg/duet/data"
+	"github.com/andyzg/duet/graphiql"
 	"github.com/ant0ine/go-json-rest/rest"
 	"github.com/gabrielwong/graphql-go-handler"
-	"github.com/mnmtanish/go-graphiql"
 
 	"golang.org/x/net/context"
 )
@@ -23,7 +25,23 @@ func main() {
 	})
 
 	authGraphqlHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := context.Background()
+		authorization := r.Header.Get("Authorization")
+		if !strings.HasPrefix(authorization, "Bearer ") {
+			http.Error(w, "Invalid authentication method", http.StatusUnauthorized)
+			return
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
+		defer cancel()
+
+		tokenString := strings.TrimPrefix(authorization, "Bearer ")
+		userId, err := data.AuthUserId(tokenString)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusUnauthorized)
+			return
+		}
+		context.WithValue(ctx, data.UserIdKey, userId)
+
 		graphqlHandler.ContextHandler(ctx, w, r)
 	})
 

@@ -14,6 +14,8 @@ var dateType *graphql.Scalar
 
 var Schema graphql.Schema
 
+var UserIdKey string = "user_id"
+
 func init() {
 	dateType = graphql.NewScalar(graphql.ScalarConfig{
 		Name:        "Date",

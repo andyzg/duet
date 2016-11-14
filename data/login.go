@@ -85,7 +85,7 @@ func ServeLogin(w rest.ResponseWriter, r *rest.Request) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, DuetClaims{
 		jwt.StandardClaims{
-			Subject:  userAndPass.Username,
+			Subject:  user.Id,
 			Issuer:   "Duet",
 			Audience: "https://api.helloduet.com",
 		},
@@ -141,4 +141,12 @@ func ServeVerifyToken(w rest.ResponseWriter, r *rest.Request) {
 		return
 	}
 	w.WriteJson(claims)
+}
+
+func AuthUserId(tokenString string) (string, error) {
+	claims, err := VerifyToken(tokenString)
+	if err != nil {
+		return "", err
+	}
+	return claims.Id, nil
 }
