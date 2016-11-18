@@ -18,6 +18,11 @@ type usernameAndPassword struct {
 	Password string `json:"password"`
 }
 
+type signupInfo struct {
+	Username string `json:"username"`
+	Id       uint64 `json:"id"`
+}
+
 type DuetClaims struct {
 	jwt.StandardClaims
 }
@@ -58,7 +63,10 @@ func ServeCreateUser(w rest.ResponseWriter, r *rest.Request) {
 		return
 	}
 
-	w.WriteJson(user)
+	w.WriteJson(signupInfo{
+		Username: user.Username,
+		Id:       user.Id,
+	})
 }
 
 func ServeLogin(w rest.ResponseWriter, r *rest.Request) {
