@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/ant0ine/go-json-rest/rest"
@@ -85,7 +86,7 @@ func ServeLogin(w rest.ResponseWriter, r *rest.Request) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, DuetClaims{
 		jwt.StandardClaims{
-			Subject:  user.Id,
+			Subject:  strconv.FormatUint(user.Id, 10),
 			Issuer:   "Duet",
 			Audience: "https://api.helloduet.com",
 		},
@@ -143,10 +144,14 @@ func ServeVerifyToken(w rest.ResponseWriter, r *rest.Request) {
 	w.WriteJson(claims)
 }
 
-func AuthUserId(tokenString string) (string, error) {
+func AuthUserId(tokenString string) (uint64, error) {
 	claims, err := VerifyToken(tokenString)
 	if err != nil {
-		return "", err
+		return 0, err
 	}
-	return claims.Subject, nil
+	userId, err := strconv.ParseUint(claims.Subject, 10, 64)
+	if err != nil {
+		return 0, err
+	}
+	return userId, nil
 }

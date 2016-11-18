@@ -33,7 +33,7 @@ var Content = []byte(`
               method: 'post',
               headers: {'Accept': 'application/json',
 												'Content-Type': 'application/json',
-												'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJodHRwczovL2FwaS5oZWxsb2R1ZXQuY29tIiwiaXNzIjoiRHVldCIsInN1YiI6IjY5Njg5YTRkLTQwMjgtNDg0NS04NjE1LTE3MDdlMDhjMmNjOSJ9.bcr62UV2w5ZLzg_dKfTDWl7vNuWkly2r65GP2OPs9WA'
+												'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJodHRwczovL2FwaS5oZWxsb2R1ZXQuY29tIiwiaXNzIjoiRHVldCIsInN1YiI6IjEifQ._UoUQNJpi1d35vV74ZqQQPz3mkZchC5gFZSxiATX_3s'
 										 	 },
               body: JSON.stringify(params),
               credentials: 'include',
