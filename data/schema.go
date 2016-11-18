@@ -78,6 +78,22 @@ func init() {
 		},
 	})
 
+	actionType = graphql.NewObject(graphql.ObjectConfig{
+		Name:        "Action",
+		Description: "An action that is performed on a task or habit",
+		Fields: graphql.Fields{
+			"id": &graphql.Field{
+				Type: graphql.ID,
+			},
+			"kind": &graphql.Field{
+				Type: actionKind,
+			},
+			"when": &graphql.Field{
+				Type: dateType,
+			},
+		},
+	})
+
 	taskType = graphql.NewObject(graphql.ObjectConfig{
 		Name:        "Task",
 		Description: "A TODO task",
@@ -97,21 +113,8 @@ func init() {
 			"done": &graphql.Field{
 				Type: graphql.Boolean,
 			},
-		},
-	})
-
-	actionType = graphql.NewObject(graphql.ObjectConfig{
-		Name:        "Action",
-		Description: "An action that is performed on a task or habit",
-		Fields: graphql.Fields{
-			"id": &graphql.Field{
-				Type: graphql.ID,
-			},
-			"kind": &graphql.Field{
-				Type: actionKind,
-			},
-			"when": &graphql.Field{
-				Type: dateType,
+			"actions": &graphql.Field{
+				Type: graphql.NewList(actionType),
 			},
 		},
 	})
@@ -277,7 +280,7 @@ func init() {
 			id, _ := p.Args["id"].(string)
 			taskId, _ := p.Args["taskId"].(string)
 			kind, _ := p.Args["kind"].(ActionKind)
-			when, _ := p.Args["when"].(time.Time)
+			when, _ := p.Args["when"].(*time.Time)
 
 			newAction := &Action{
 				Id:     id,

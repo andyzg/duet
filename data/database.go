@@ -18,6 +18,7 @@ type Task struct {
 	EndDate   *time.Time `json:"end_date"`
 	Done      bool       `json:"done" gorm:"not_null;default:false"`
 	UserId    uint64     `json:"user_id" gorm:"not_null"`
+	Actions   []Action   `json:"actions" gorm:"ForeignKey:TaskId"`
 }
 
 type ActionKind int
@@ -30,7 +31,7 @@ const (
 type Action struct {
 	Id     string     `json:"id" gorm:"primary_key;type:uuid;default:uuid_generate_v4()"`
 	Kind   ActionKind `gorm:"not_null"`
-	When   time.Time  `gorm:"not_null"`
+	When   *time.Time `gorm:"not_null"`
 	TaskId string     `gorm:"not_null;type:uuid"`
 }
 
@@ -52,7 +53,7 @@ func InitDatabase() {
 	if err != nil {
 		panic(err)
 	}
-	db.AutoMigrate(&Task{}, &User{})
+	db.AutoMigrate(&Task{}, &User{}, &Action{})
 }
 
 func CloseDatabase() {
@@ -63,7 +64,7 @@ func GetTask(taskId string, userId uint64) (*Task, error) {
 	task := Task{
 		Id: taskId,
 	}
-	if err := db.Model(&User{Id: userId}).Related(&task).First(&task).Error; err != nil {
+	if err := db.Preload("Actions").Model(&User{Id: userId}).Related(&task).First(&task).Error; err != nil {
 		return nil, err
 	}
 	return &task, nil
@@ -71,7 +72,7 @@ func GetTask(taskId string, userId uint64) (*Task, error) {
 
 func GetTasks(userId uint64) ([]Task, error) {
 	var tasks []Task
-	if err := db.Model(&User{Id: userId}).Related(&tasks).Error; err != nil {
+	if err := db.Preload("Action").Model(&User{Id: userId}).Related(&tasks).Error; err != nil {
 		return nil, err
 	}
 	return tasks, nil
