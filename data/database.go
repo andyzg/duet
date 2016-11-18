@@ -30,9 +30,9 @@ const (
 
 type Action struct {
 	Id     string     `json:"id" gorm:"primary_key;type:uuid;default:uuid_generate_v4()"`
-	Kind   ActionKind `gorm:"not_null"`
-	When   *time.Time `gorm:"not_null"`
-	TaskId string     `gorm:"not_null;type:uuid"`
+	Kind   ActionKind `json:"kind" gorm:"not_null"`
+	When   *time.Time `json:"when" gorm:"not_null"`
+	TaskId string     `json:"task_id" gorm:"not_null;type:uuid"`
 }
 
 type User struct {
@@ -64,6 +64,7 @@ func GetTask(taskId string, userId uint64) (*Task, error) {
 	task := Task{
 		Id: taskId,
 	}
+	// TODO: Only preload actions if necessary
 	if err := db.Preload("Actions").Model(&User{Id: userId}).Related(&task).First(&task).Error; err != nil {
 		return nil, err
 	}
@@ -72,7 +73,8 @@ func GetTask(taskId string, userId uint64) (*Task, error) {
 
 func GetTasks(userId uint64) ([]Task, error) {
 	var tasks []Task
-	if err := db.Preload("Action").Model(&User{Id: userId}).Related(&tasks).Error; err != nil {
+	// TODO: Only preload actions if necessary
+	if err := db.Preload("Actions").Model(&User{Id: userId}).Related(&tasks).Error; err != nil {
 		return nil, err
 	}
 	return tasks, nil
@@ -107,6 +109,10 @@ func UpdateTask(taskId string, userId uint64, attrs map[string]interface{}) (*Ta
 	}
 	if result.RowsAffected == 0 {
 		return nil, fmt.Errorf("Task ID \"%s\" does not exist for user \"%d\"", taskId, userId)
+	}
+	// TODO: Only query actions if necessary
+	if err := db.Model(&task).Related(&task.Actions).Error; err != nil {
+		return nil, err
 	}
 	return &task, nil
 }

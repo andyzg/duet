@@ -134,10 +134,10 @@ func init() {
 				return nil, err
 			}
 			// Type of the nil matters apparently
-			if task != nil {
-				return task, nil
+			if task == nil {
+				return nil, nil
 			}
-			return nil, nil
+			return task, nil
 		},
 	}
 
