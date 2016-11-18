@@ -20,6 +20,20 @@ type Task struct {
 	UserId    uint64     `json:"user_id" gorm:"not_null"`
 }
 
+type ActionKind int
+
+const (
+	ActionProgress ActionKind = iota
+	ActionDefer
+)
+
+type Action struct {
+	Id     string     `json:"id" gorm:"primary_key;type:uuid;default:uuid_generate_v4()"`
+	Kind   ActionKind `gorm:"not_null"`
+	When   time.Time  `gorm:"not_null"`
+	TaskId string     `gorm:"not_null;type:uuid"`
+}
+
 type User struct {
 	Id             uint64 `json:"id" gorm:"primary_key"`
 	CreatedAt      time.Time
@@ -118,4 +132,15 @@ func GetUserByUsername(username string) (*User, error) {
 		return nil, err
 	}
 	return user, nil
+}
+
+func AddAction(action *Action, userId uint64) error {
+	task, err := GetTask(action.TaskId, userId)
+	if task == nil {
+		return fmt.Errorf("Task %s does not exist for user %d", action.TaskId, userId)
+	}
+	if err != nil {
+		return err
+	}
+	return db.Create(action).Error
 }

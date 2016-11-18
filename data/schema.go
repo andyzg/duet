@@ -11,6 +11,8 @@ import (
 
 var taskType *graphql.Object
 var dateType *graphql.Scalar
+var actionType *graphql.Object
+var actionKind *graphql.Enum
 
 var Schema graphql.Schema
 
@@ -61,6 +63,21 @@ func init() {
 		},
 	})
 
+	actionKind = graphql.NewEnum(graphql.EnumConfig{
+		Name:        "ActionKind",
+		Description: "The kind of action performed on a task or habit",
+		Values: graphql.EnumValueConfigMap{
+			"PROGRESS": &graphql.EnumValueConfig{
+				Value:       ActionProgress,
+				Description: "Indication of progress on the task",
+			},
+			"DEFER": &graphql.EnumValueConfig{
+				Value:       ActionDefer,
+				Description: "User is defering the task",
+			},
+		},
+	})
+
 	taskType = graphql.NewObject(graphql.ObjectConfig{
 		Name:        "Task",
 		Description: "A TODO task",
@@ -79,6 +96,22 @@ func init() {
 			},
 			"done": &graphql.Field{
 				Type: graphql.Boolean,
+			},
+		},
+	})
+
+	actionType = graphql.NewObject(graphql.ObjectConfig{
+		Name:        "Action",
+		Description: "An action that is performed on a task or habit",
+		Fields: graphql.Fields{
+			"id": &graphql.Field{
+				Type: graphql.ID,
+			},
+			"kind": &graphql.Field{
+				Type: actionKind,
+			},
+			"when": &graphql.Field{
+				Type: dateType,
 			},
 		},
 	})
@@ -224,6 +257,42 @@ func init() {
 		},
 	}
 
+	addActionMutation := &graphql.Field{
+		Type: actionType,
+		Args: graphql.FieldConfigArgument{
+			"id": &graphql.ArgumentConfig{
+				Type: graphql.ID,
+			},
+			"taskId": &graphql.ArgumentConfig{
+				Type: graphql.NewNonNull(graphql.ID),
+			},
+			"kind": &graphql.ArgumentConfig{
+				Type: graphql.NewNonNull(actionKind),
+			},
+			"when": &graphql.ArgumentConfig{
+				Type: graphql.NewNonNull(dateType),
+			},
+		},
+		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+			id, _ := p.Args["id"].(string)
+			taskId, _ := p.Args["taskId"].(string)
+			kind, _ := p.Args["kind"].(ActionKind)
+			when, _ := p.Args["when"].(time.Time)
+
+			newAction := &Action{
+				Id:     id,
+				Kind:   kind,
+				When:   when,
+				TaskId: taskId,
+			}
+
+			if err := AddAction(newAction, userIdOfContext(p)); err != nil {
+				return nil, err
+			}
+			return newAction, nil
+		},
+	}
+
 	queryType := graphql.NewObject(graphql.ObjectConfig{
 		Name: "RootQuery",
 		Fields: graphql.Fields{
@@ -238,6 +307,7 @@ func init() {
 			"addTask":    addTaskMutation,
 			"deleteTask": deleteTaskMutation,
 			"updateTask": updateTaskMutation,
+			"addAction":  addActionMutation,
 		},
 	})
 
