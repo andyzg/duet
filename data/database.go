@@ -184,3 +184,20 @@ func AddAction(action *Action, userId uint64) error {
 	}
 	return db.Create(action).Error
 }
+
+func DeleteAction(id string, userId uint64) error {
+	action := &Action{
+		Id: id,
+	}
+	if err := db.Where(action).First(action).Error; err != nil {
+		return err
+	}
+	task, err := GetTask(action.TaskId, userId, nil)
+	if err != nil {
+		return err
+	}
+	if task == nil {
+		return fmt.Errorf("Not authorized to delete action %s", id)
+	}
+	return db.Delete(action).Error
+}

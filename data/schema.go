@@ -466,6 +466,33 @@ func init() {
 		},
 	}
 
+	deleteActionMutation := &graphql.Field{
+		Type: graphql.NewObject(graphql.ObjectConfig{
+			Name: "removeActionPayload",
+			Fields: graphql.Fields{
+				"deletedId": &graphql.Field{
+					Type: graphql.ID,
+					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+						return p.Source, nil
+					},
+				},
+			},
+		}),
+		Args: graphql.FieldConfigArgument{
+			"id": &graphql.ArgumentConfig{
+				Type: graphql.ID,
+			},
+		},
+		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+			id, _ := p.Args["id"].(string)
+
+			if err := DeleteAction(id, userIdOfContext(p)); err != nil {
+				return nil, err
+			}
+			return id, nil
+		},
+	}
+
 	queryType := graphql.NewObject(graphql.ObjectConfig{
 		Name: "RootQuery",
 		Fields: graphql.Fields{
@@ -479,12 +506,13 @@ func init() {
 	mutationType := graphql.NewObject(graphql.ObjectConfig{
 		Name: "RootMutation",
 		Fields: graphql.Fields{
-			"addTask":     addTaskMutation,
-			"deleteTask":  deleteTaskMutation,
-			"updateTask":  updateTaskMutation,
-			"addHabit":    addHabitMutation,
-			"updateHabit": updateHabitMutation,
-			"addAction":   addActionMutation,
+			"addTask":      addTaskMutation,
+			"deleteTask":   deleteTaskMutation,
+			"updateTask":   updateTaskMutation,
+			"addHabit":     addHabitMutation,
+			"updateHabit":  updateHabitMutation,
+			"addAction":    addActionMutation,
+			"deleteAction": deleteActionMutation,
 		},
 	})
 
