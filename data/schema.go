@@ -81,11 +81,11 @@ func init() {
 		Description: "The recurring period for a Habit",
 		Values: graphql.EnumValueConfigMap{
 			"WEEKLY": &graphql.EnumValueConfig{
-				Value:       ActionProgress,
+				Value:       Weekly,
 				Description: "The habit resets weekly",
 			},
 			"MONTHLY": &graphql.EnumValueConfig{
-				Value:       ActionDefer,
+				Value:       Monthly,
 				Description: "The habit resets monthly",
 			},
 		},
@@ -205,10 +205,41 @@ func init() {
 		},
 	}
 
+	habitQuery := &graphql.Field{
+		Type: habitType,
+		Args: graphql.FieldConfigArgument{
+			"id": &graphql.ArgumentConfig{
+				Type:         graphql.ID,
+				DefaultValue: nil,
+			},
+		},
+		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+			id := p.Args["id"].(string)
+			kind := HabitEnum
+			task, err := GetTask(id, userIdOfContext(p), &kind)
+			if err != nil {
+				return nil, err
+			}
+			// Type of the nil matters apparently
+			if task == nil {
+				return nil, nil
+			}
+			return task, nil
+		},
+	}
+
 	tasksQuery := &graphql.Field{
 		Type: graphql.NewList(taskType),
 		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 			kind := TaskEnum
+			return GetTasks(userIdOfContext(p), &kind)
+		},
+	}
+
+	habitsQuery := &graphql.Field{
+		Type: graphql.NewList(habitType),
+		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+			kind := HabitEnum
 			return GetTasks(userIdOfContext(p), &kind)
 		},
 	}
@@ -246,6 +277,43 @@ func init() {
 				EndDate:   endDate,
 				Done:      done,
 				Kind:      TaskEnum,
+			}
+
+			if err := AddTask(newTask, userIdOfContext(p)); err != nil {
+				return nil, err
+			}
+			return newTask, nil
+		},
+	}
+
+	addHabitMutation := &graphql.Field{
+		Type: habitType,
+		Args: graphql.FieldConfigArgument{
+			"id": &graphql.ArgumentConfig{
+				Type: graphql.ID,
+			},
+			"title": &graphql.ArgumentConfig{
+				Type: graphql.NewNonNull(graphql.String),
+			},
+			"interval": &graphql.ArgumentConfig{
+				Type: graphql.NewNonNull(interval),
+			},
+			"frequency": &graphql.ArgumentConfig{
+				Type: graphql.NewNonNull(graphql.Int),
+			},
+		},
+		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+			id, _ := p.Args["id"].(string)
+			title, _ := p.Args["title"].(string)
+			interval, _ := p.Args["interval"].(Interval)
+			frequency, _ := p.Args["frequency"].(int)
+
+			newTask := &Task{
+				Id:        id,
+				Title:     title,
+				Interval:  interval,
+				Frequency: frequency,
+				Kind:      HabitEnum,
 			}
 
 			if err := AddTask(newTask, userIdOfContext(p)); err != nil {
@@ -365,8 +433,10 @@ func init() {
 	queryType := graphql.NewObject(graphql.ObjectConfig{
 		Name: "RootQuery",
 		Fields: graphql.Fields{
-			"task":  taskQuery,
-			"tasks": tasksQuery,
+			"task":   taskQuery,
+			"tasks":  tasksQuery,
+			"habit":  habitQuery,
+			"habits": habitsQuery,
 		},
 	})
 
@@ -376,6 +446,7 @@ func init() {
 			"addTask":    addTaskMutation,
 			"deleteTask": deleteTaskMutation,
 			"updateTask": updateTaskMutation,
+			"addHabit":   addHabitMutation,
 			"addAction":  addActionMutation,
 		},
 	})
