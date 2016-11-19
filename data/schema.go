@@ -351,6 +351,7 @@ func init() {
 			}
 			return id, nil
 		},
+		Description: "Deletes a task or habit by ID",
 	}
 
 	updateTaskMutation := &graphql.Field{
@@ -388,6 +389,41 @@ func init() {
 			}
 			if done, ok := p.Args["done"].(bool); ok {
 				attrs["done"] = done
+			}
+
+			return UpdateTask(id, userIdOfContext(p), attrs)
+		},
+	}
+
+	updateHabitMutation := &graphql.Field{
+		Type: habitType,
+		Args: graphql.FieldConfigArgument{
+			"id": &graphql.ArgumentConfig{
+				Type: graphql.ID,
+			},
+			"title": &graphql.ArgumentConfig{
+				Type: graphql.String,
+			},
+			"interval": &graphql.ArgumentConfig{
+				Type: interval,
+			},
+			"frequency": &graphql.ArgumentConfig{
+				Type: graphql.Int,
+			},
+		},
+		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+			id, _ := p.Args["id"].(string)
+
+			attrs := make(map[string]interface{})
+
+			if title, ok := p.Args["title"].(string); ok {
+				attrs["title"] = title
+			}
+			if interval, ok := p.Args["interval"].(Interval); ok {
+				attrs["interval"] = interval
+			}
+			if frequency, ok := p.Args["frequency"].(int); ok {
+				attrs["frequency"] = frequency
 			}
 
 			return UpdateTask(id, userIdOfContext(p), attrs)
@@ -443,11 +479,12 @@ func init() {
 	mutationType := graphql.NewObject(graphql.ObjectConfig{
 		Name: "RootMutation",
 		Fields: graphql.Fields{
-			"addTask":    addTaskMutation,
-			"deleteTask": deleteTaskMutation,
-			"updateTask": updateTaskMutation,
-			"addHabit":   addHabitMutation,
-			"addAction":  addActionMutation,
+			"addTask":     addTaskMutation,
+			"deleteTask":  deleteTaskMutation,
+			"updateTask":  updateTaskMutation,
+			"addHabit":    addHabitMutation,
+			"updateHabit": updateHabitMutation,
+			"addAction":   addActionMutation,
 		},
 	})
 
