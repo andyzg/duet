@@ -8,17 +8,37 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
 
+type TaskKind int
+
+const (
+	TaskEnum TaskKind = iota
+	HabitEnum
+)
+
+type Interval int
+
+const (
+	Weekly Interval = iota
+	Monthly
+)
+
 type Task struct {
-	Id        string `json:"id" gorm:"primary_key;type:uuid;default:uuid_generate_v4()"`
+	// Common fields
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	DeletedAt *time.Time
-	Title     string     `json:"title" gorm:"not_null"`
+	Id        string   `json:"id" gorm:"primary_key;type:uuid;default:uuid_generate_v4()"`
+	Kind      TaskKind `json:"kind" gorm:"not_null"`
+	Title     string   `json:"title" gorm:"not_null"`
+	UserId    uint64   `json:"user_id" gorm:"not_null"`
+	Actions   []Action `json:"actions" gorm:"ForeignKey:TaskId"`
+	// Task Fields
 	StartDate *time.Time `json:"start_date"`
 	EndDate   *time.Time `json:"end_date"`
 	Done      bool       `json:"done" gorm:"not_null;default:false"`
-	UserId    uint64     `json:"user_id" gorm:"not_null"`
-	Actions   []Action   `json:"actions" gorm:"ForeignKey:TaskId"`
+	// Habit Fields
+	Interval  Interval `json:"interval"`
+	Frequency int      `json:"frequency"`
 }
 
 type ActionKind int
@@ -60,21 +80,34 @@ func CloseDatabase() {
 	db.Close()
 }
 
-func GetTask(taskId string, userId uint64) (*Task, error) {
-	task := Task{
-		Id: taskId,
+func GetTask(taskId string, userId uint64, kind *TaskKind) (*Task, error) {
+	whereFields := map[string]interface{}{
+		"id":      taskId,
+		"user_id": userId,
 	}
+	if kind != nil {
+		whereFields["kind"] = *kind
+	}
+
+	var task Task
 	// TODO: Only preload actions if necessary
-	if err := db.Preload("Actions").Model(&User{Id: userId}).Related(&task).First(&task).Error; err != nil {
+	if err := db.Preload("Actions").Where(whereFields).First(&task).Error; err != nil {
 		return nil, err
 	}
 	return &task, nil
 }
 
-func GetTasks(userId uint64) ([]Task, error) {
+func GetTasks(userId uint64, kind *TaskKind) ([]Task, error) {
+	whereFields := map[string]interface{}{
+		"user_id": userId,
+	}
+	if kind != nil {
+		whereFields["kind"] = *kind
+	}
+
 	var tasks []Task
 	// TODO: Only preload actions if necessary
-	if err := db.Preload("Actions").Model(&User{Id: userId}).Related(&tasks).Error; err != nil {
+	if err := db.Preload("Actions").Where(whereFields).Find(&tasks).Error; err != nil {
 		return nil, err
 	}
 	return tasks, nil
@@ -142,7 +175,7 @@ func GetUserByUsername(username string) (*User, error) {
 }
 
 func AddAction(action *Action, userId uint64) error {
-	task, err := GetTask(action.TaskId, userId)
+	task, err := GetTask(action.TaskId, userId, nil)
 	if task == nil {
 		return fmt.Errorf("Task %s does not exist for user %d", action.TaskId, userId)
 	}

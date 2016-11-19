@@ -10,9 +10,7 @@ import (
 )
 
 var taskType *graphql.Object
-var dateType *graphql.Scalar
-var actionType *graphql.Object
-var actionKind *graphql.Enum
+var habitType *graphql.Object
 
 var Schema graphql.Schema
 
@@ -25,7 +23,7 @@ func userIdOfContext(p graphql.ResolveParams) uint64 {
 }
 
 func init() {
-	dateType = graphql.NewScalar(graphql.ScalarConfig{
+	dateType := graphql.NewScalar(graphql.ScalarConfig{
 		Name:        "Date",
 		Description: "Date and time",
 		Serialize: func(t interface{}) interface{} {
@@ -63,7 +61,7 @@ func init() {
 		},
 	})
 
-	actionKind = graphql.NewEnum(graphql.EnumConfig{
+	actionKind := graphql.NewEnum(graphql.EnumConfig{
 		Name:        "ActionKind",
 		Description: "The kind of action performed on a task or habit",
 		Values: graphql.EnumValueConfigMap{
@@ -78,7 +76,22 @@ func init() {
 		},
 	})
 
-	actionType = graphql.NewObject(graphql.ObjectConfig{
+	interval := graphql.NewEnum(graphql.EnumConfig{
+		Name:        "Interval",
+		Description: "The recurring period for a Habit",
+		Values: graphql.EnumValueConfigMap{
+			"WEEKLY": &graphql.EnumValueConfig{
+				Value:       ActionProgress,
+				Description: "The habit resets weekly",
+			},
+			"MONTHLY": &graphql.EnumValueConfig{
+				Value:       ActionDefer,
+				Description: "The habit resets monthly",
+			},
+		},
+	})
+
+	actionType := graphql.NewObject(graphql.ObjectConfig{
 		Name:        "Action",
 		Description: "An action that is performed on a task or habit",
 		Fields: graphql.Fields{
@@ -93,6 +106,34 @@ func init() {
 			},
 		},
 	})
+
+	baseTaskInterface := graphql.NewInterface(graphql.InterfaceConfig{
+		Name:        "BaseTask",
+		Description: "Fields common to task and habit",
+		Fields: graphql.Fields{
+			"id": &graphql.Field{
+				Type: graphql.ID,
+			},
+			"title": &graphql.Field{
+				Type: graphql.String,
+			},
+			"actions": &graphql.Field{
+				Type: graphql.NewList(actionType),
+			},
+		},
+		ResolveType: func(p graphql.ResolveTypeParams) *graphql.Object {
+			task, ok := p.Value.(Task)
+			if !ok {
+				log.Printf("Failed to get task %v", task)
+				return taskType
+			}
+			if task.Kind == TaskEnum {
+				return taskType
+			}
+			return habitType
+		},
+	})
+	_ = baseTaskInterface
 
 	taskType = graphql.NewObject(graphql.ObjectConfig{
 		Name:        "Task",
@@ -119,6 +160,28 @@ func init() {
 		},
 	})
 
+	habitType = graphql.NewObject(graphql.ObjectConfig{
+		Name:        "Habit",
+		Description: "A recurring habit",
+		Fields: graphql.Fields{
+			"id": &graphql.Field{
+				Type: graphql.ID,
+			},
+			"title": &graphql.Field{
+				Type: graphql.String,
+			},
+			"interval": &graphql.Field{
+				Type: interval,
+			},
+			"frequency": &graphql.Field{
+				Type: graphql.Int,
+			},
+			"actions": &graphql.Field{
+				Type: graphql.NewList(actionType),
+			},
+		},
+	})
+
 	taskQuery := &graphql.Field{
 		Type: taskType,
 		Args: graphql.FieldConfigArgument{
@@ -129,7 +192,8 @@ func init() {
 		},
 		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 			id := p.Args["id"].(string)
-			task, err := GetTask(id, userIdOfContext(p))
+			kind := TaskEnum
+			task, err := GetTask(id, userIdOfContext(p), &kind)
 			if err != nil {
 				return nil, err
 			}
@@ -144,7 +208,8 @@ func init() {
 	tasksQuery := &graphql.Field{
 		Type: graphql.NewList(taskType),
 		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-			return GetTasks(userIdOfContext(p))
+			kind := TaskEnum
+			return GetTasks(userIdOfContext(p), &kind)
 		},
 	}
 
@@ -180,6 +245,7 @@ func init() {
 				StartDate: startDate,
 				EndDate:   endDate,
 				Done:      done,
+				Kind:      TaskEnum,
 			}
 
 			if err := AddTask(newTask, userIdOfContext(p)); err != nil {
