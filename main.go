@@ -27,6 +27,7 @@ func main() {
 	authGraphqlHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authorization := r.Header.Get("Authorization")
 		if !strings.HasPrefix(authorization, "Bearer ") {
+			log.Printf("Invalid authorization header \"%s\"", authorization)
 			http.Error(w, "Invalid authentication method", http.StatusUnauthorized)
 			return
 		}
@@ -37,7 +38,8 @@ func main() {
 		tokenString := strings.TrimPrefix(authorization, "Bearer ")
 		userId, err := data.AuthUserId(tokenString)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusUnauthorized)
+			log.Printf("Error verifying token: %s", err.Error())
+			http.Error(w, "Invalid token", http.StatusUnauthorized)
 			return
 		}
 		ctx = context.WithValue(ctx, data.UserIdKey, userId)
