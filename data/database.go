@@ -18,7 +18,8 @@ const (
 type Interval int
 
 const (
-	Weekly Interval = iota
+	Daily Interval = iota
+	Weekly
 	Monthly
 )
 

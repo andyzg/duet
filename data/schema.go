@@ -80,6 +80,10 @@ func init() {
 		Name:        "Interval",
 		Description: "The recurring period for a Habit",
 		Values: graphql.EnumValueConfigMap{
+			"DAILY": &graphql.EnumValueConfig{
+				Value:       Daily,
+				Description: "The habit resets daily",
+			},
 			"WEEKLY": &graphql.EnumValueConfig{
 				Value:       Weekly,
 				Description: "The habit resets weekly",
