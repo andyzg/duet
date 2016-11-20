@@ -47,6 +47,7 @@ type ActionKind int
 const (
 	ActionProgress ActionKind = iota
 	ActionDefer
+	ActionDone
 )
 
 type Action struct {

@@ -73,6 +73,10 @@ func init() {
 				Value:       ActionDefer,
 				Description: "User is defering the task",
 			},
+			"DONE": &graphql.EnumValueConfig{
+				Value:       ActionDone,
+				Description: "User has completed the task",
+			},
 		},
 	})
 
