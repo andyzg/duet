@@ -142,7 +142,8 @@ func ServeVerifyToken(w rest.ResponseWriter, r *rest.Request) {
 	tokenString := strings.TrimPrefix(authorization, "Bearer ")
 	claims, err := VerifyToken(tokenString)
 	if err != nil {
-		rest.Error(w, err.Error(), http.StatusUnauthorized)
+		log.Printf("Error verifying token: %s", err.Error())
+		rest.Error(w, "Invalid token", http.StatusUnauthorized)
 		return
 	}
 	if claims == nil {
