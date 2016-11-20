@@ -135,6 +135,7 @@ func VerifyToken(tokenString string) (*DuetClaims, error) {
 func ServeVerifyToken(w rest.ResponseWriter, r *rest.Request) {
 	authorization := r.Header.Get("Authorization")
 	if !strings.HasPrefix(authorization, "Bearer ") {
+		log.Printf("Invalid authorization header: \"%s\"", authorization)
 		rest.Error(w, "Invalid authentication method", http.StatusUnauthorized)
 		return
 	}
