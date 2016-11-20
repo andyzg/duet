@@ -180,6 +180,9 @@ func init() {
 			"frequency": &graphql.Field{
 				Type: graphql.Int,
 			},
+			"done": &graphql.Field{
+				Type: graphql.Boolean,
+			},
 			"actions": &graphql.Field{
 				Type: graphql.NewList(actionType),
 			},
@@ -305,18 +308,23 @@ func init() {
 			"frequency": &graphql.ArgumentConfig{
 				Type: graphql.NewNonNull(graphql.Int),
 			},
+			"done": &graphql.ArgumentConfig{
+				Type: graphql.Boolean,
+			},
 		},
 		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 			id, _ := p.Args["id"].(string)
 			title, _ := p.Args["title"].(string)
 			interval, _ := p.Args["interval"].(Interval)
 			frequency, _ := p.Args["frequency"].(int)
+			done, _ := p.Args["done"].(bool)
 
 			newTask := &Task{
 				Id:        id,
 				Title:     title,
 				Interval:  interval,
 				Frequency: frequency,
+				Done:      done,
 				Kind:      HabitEnum,
 			}
 
@@ -414,6 +422,9 @@ func init() {
 			"frequency": &graphql.ArgumentConfig{
 				Type: graphql.Int,
 			},
+			"done": &graphql.ArgumentConfig{
+				Type: graphql.Boolean,
+			},
 		},
 		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 			id, _ := p.Args["id"].(string)
@@ -428,6 +439,9 @@ func init() {
 			}
 			if frequency, ok := p.Args["frequency"].(int); ok {
 				attrs["frequency"] = frequency
+			}
+			if done, ok := p.Args["done"].(bool); ok {
+				attrs["done"] = done
 			}
 
 			return UpdateTask(id, userIdOfContext(p), attrs)

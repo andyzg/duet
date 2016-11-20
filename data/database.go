@@ -31,12 +31,12 @@ type Task struct {
 	Id        string   `json:"id" gorm:"primary_key;type:uuid;default:uuid_generate_v4()"`
 	Kind      TaskKind `json:"kind" gorm:"not_null"`
 	Title     string   `json:"title" gorm:"not_null"`
+	Done      bool     `json:"done" gorm:"not_null;default:false"`
 	UserId    uint64   `json:"user_id" gorm:"not_null"`
 	Actions   []Action `json:"actions" gorm:"ForeignKey:TaskId"`
 	// Task Fields
 	StartDate *time.Time `json:"start_date"`
 	EndDate   *time.Time `json:"end_date"`
-	Done      bool       `json:"done" gorm:"not_null;default:false"`
 	// Habit Fields
 	Interval  Interval `json:"interval"`
 	Frequency int      `json:"frequency"`

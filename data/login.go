@@ -147,10 +147,6 @@ func ServeVerifyToken(w rest.ResponseWriter, r *rest.Request) {
 		rest.Error(w, "Invalid token", http.StatusUnauthorized)
 		return
 	}
-	if claims == nil {
-		rest.Error(w, "Claims are nil", http.StatusInternalServerError)
-		return
-	}
 	w.WriteJson(claims)
 }
 
