@@ -132,16 +132,23 @@ func VerifyToken(tokenString string) (*DuetClaims, error) {
 	}
 }
 
-func ServeVerifyToken(w rest.ResponseWriter, r *rest.Request) {
+func GetBearerToken(r *http.Request) (string, error) {
 	authorization := r.Header.Get("Authorization")
 	if !strings.HasPrefix(authorization, "Bearer ") {
 		log.Printf("Invalid authorization header: \"%s\"", authorization)
-		rest.Error(w, "Invalid authentication method", http.StatusUnauthorized)
+		return "", fmt.Errorf("Invalid authentication method")
+	}
+	return strings.TrimPrefix(authorization, "Bearer "), nil
+}
+
+func ServeVerifyToken(w rest.ResponseWriter, r *rest.Request) {
+	token, err := GetBearerToken(r.Request)
+	if err != nil {
+		rest.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
 
-	tokenString := strings.TrimPrefix(authorization, "Bearer ")
-	claims, err := VerifyToken(tokenString)
+	claims, err := VerifyToken(token)
 	if err != nil {
 		log.Printf("Error verifying token: %s", err.Error())
 		rest.Error(w, "Invalid token", http.StatusUnauthorized)

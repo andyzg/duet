@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/andyzg/duet/data"
@@ -25,18 +24,16 @@ func main() {
 	})
 
 	authGraphqlHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		authorization := r.Header.Get("Authorization")
-		if !strings.HasPrefix(authorization, "Bearer ") {
-			log.Printf("Invalid authorization header \"%s\"", authorization)
-			http.Error(w, "Invalid authentication method", http.StatusUnauthorized)
+		token, err := data.GetBearerToken(r)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
 		}
 
 		ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
 		defer cancel()
 
-		tokenString := strings.TrimPrefix(authorization, "Bearer ")
-		userId, err := data.AuthUserId(tokenString)
+		userId, err := data.AuthUserId(token)
 		if err != nil {
 			log.Printf("Error verifying token: %s", err.Error())
 			http.Error(w, "Invalid token", http.StatusUnauthorized)
