@@ -60,6 +60,8 @@ func main() {
 	http.HandleFunc("/", graphiql.ServeGraphiQL)
 	http.Handle("/rest/", http.StripPrefix("/rest", restApi.MakeHandler()))
 	http.Handle("/graphql", authGraphqlHandler)
+	http.Handle("/oauth/todoist/login", http.HandlerFunc(data.HandleTodoistLogin))
+	http.Handle("/oauth/todoist/callback", http.HandlerFunc(data.HandleTodoistCallback))
 
 	err = http.ListenAndServe(":8080", nil)
 	if err != nil {

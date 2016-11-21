@@ -117,6 +117,14 @@
 		{
 			"ImportPath": "golang.org/x/net/context",
 			"Rev": "8b4af36cd21a1f85a7484b49feb7c79363106d8e"
+		},
+		{
+			"ImportPath": "golang.org/x/oauth2",
+			"Rev": "d5040cddfc0da40b408c9a1da4728662435176a9"
+		},
+		{
+			"ImportPath": "golang.org/x/oauth2/internal",
+			"Rev": "d5040cddfc0da40b408c9a1da4728662435176a9"
 		}
 	]
 }
