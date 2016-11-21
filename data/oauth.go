@@ -3,11 +3,11 @@ package data
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
 	"os"
+	"time"
 
 	"golang.org/x/oauth2"
 )
@@ -33,6 +33,12 @@ type AccessTokenResponse struct {
 type TodoistItem struct {
 	Title   string `json:"content"`
 	DueDate string `json:"due_date_utc"` // in format "Mon 07 Aug 2006 12:34:56 +0000"
+	Checked int    `json:checked`        // 1 is true, 0 is false
+}
+
+type TodoistSync struct {
+	SyncToken string        `json:"sync_token"`
+	Items     []TodoistItem `json:"items"`
 }
 
 func HandleTodoistLogin(w http.ResponseWriter, r *http.Request) {
@@ -99,12 +105,39 @@ func SyncTodoist(userId uint64, oauthToken string) error {
 		log.Printf("Error making POST request to %s: '%s'", todoistSyncUrl, err)
 		return fmt.Errorf("Error making request to Todoist")
 	}
-	defer response.Body.Close()
-	contents, err := ioutil.ReadAll(response.Body)
+
+	sync := TodoistSync{}
+	err = json.NewDecoder(response.Body).Decode(&sync)
+	response.Body.Close()
 	if err != nil {
-		log.Printf("Error reading Todoist response: '%s'", err)
-		return fmt.Errorf("Error reading Todoist response")
+		log.Printf("Error parsing Todoist response: '%s'", err)
+		return fmt.Errorf("Error parsing Todoist response")
 	}
-	log.Printf("Todoist response: '%s'", contents)
+
+	for _, item := range sync.Items {
+		var endDate *time.Time
+		if item.DueDate != "" {
+			const longForm = "Mon 02 Jan 2006 15:04:05 +0000"
+			t, err := time.Parse(longForm, item.DueDate)
+			if err != nil {
+				log.Printf("Error parsing due date '%s': '%s'", item.DueDate)
+			} else {
+				endDate = &t
+			}
+		}
+		task := Task{
+			Kind:    TaskEnum,
+			Title:   item.Title,
+			Done:    item.Checked == 1,
+			EndDate: endDate,
+		}
+		err = AddTask(&task, userId)
+		if err != nil {
+			log.Printf("Error adding task: '%s'", err)
+		} else {
+			log.Printf("Added task %s", task)
+		}
+	}
+
 	return nil
 }
