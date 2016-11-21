@@ -1,6 +1,7 @@
 package data
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -21,6 +22,11 @@ var todoistConf *oauth2.Config = &oauth2.Config{
 		AuthURL:  "https://todoist.com/oauth/authorize",
 		TokenURL: "https://todoist.com/oauth/access_token",
 	},
+}
+
+type AccessTokenResponse struct {
+	AccessToken string `json:"access_token"`
+	Error       string `json:"error"`
 }
 
 func HandleTodoistLogin(w http.ResponseWriter, r *http.Request) {
@@ -47,17 +53,32 @@ func HandleTodoistCallback(w http.ResponseWriter, r *http.Request) {
 
 	code := r.FormValue("code")
 	log.Printf("Retrieved Todoist code '%s'", code)
-	oauthToken, err := todoistConf.Exchange(oauth2.NoContext, code)
+
+	exchangeValues := url.Values{}
+	exchangeValues.Set("code", code)
+	exchangeValues.Set("client_id", todoistConf.ClientID)
+	exchangeValues.Set("client_secret", todoistConf.ClientSecret)
+	exchangeResponse, err := http.PostForm(todoistConf.Endpoint.TokenURL, exchangeValues)
 	if err != nil {
 		log.Printf("Todoist code exchange failed with '%s'", err)
 		http.Error(w, "Todoist code exchange failed", http.StatusUnauthorized)
 		return
 	}
 
+	accessToken := AccessTokenResponse{}
+	json.NewDecoder(exchangeResponse.Body).Decode(&accessToken)
+	exchangeResponse.Body.Close()
+	if accessToken.Error != "" {
+		log.Printf("Todoist access token JSON contains error '%s'", accessToken.Error)
+		http.Error(w, "Todoist code exchange failed", http.StatusUnauthorized)
+		return
+	}
+	log.Printf("Retrieved Todoist access token '%s'", accessToken.AccessToken)
+
 	v := url.Values{}
-	v.Set("token", oauthToken.AccessToken)
+	v.Set("token", accessToken.AccessToken)
 	v.Set("sync_token", "*")
-	v.Set("resource_types", "[\"notes\"]")
+	v.Set("resource_types", "[\"items\"]")
 	response, err := http.PostForm(todoistSyncUrl, v)
 	if err != nil {
 		log.Printf("Error fetching data from Todoist: '%s'", err)
