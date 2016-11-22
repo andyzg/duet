@@ -12,7 +12,7 @@ count=$3
 
 echo "Signing up $count users with prefix '$1'"
 
-for ((i=0; i < $count; i++)); do
+for ((i=1; i <= $count; i++)); do
   user=$prefix$i
   curl "$server/rest/signup" --fail -H "Content-Type: application/json" -X POST \
     -d '{ "username": "'$user'", "password": "'$password'" }'
