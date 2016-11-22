@@ -192,6 +192,34 @@ func init() {
 		},
 	})
 
+	userType := graphql.NewObject(graphql.ObjectConfig{
+		Name:        "User",
+		Description: "A Duet user",
+		Fields: graphql.Fields{
+			"id": &graphql.Field{
+				Type: graphql.ID,
+			},
+			"username": &graphql.Field{
+				Type: graphql.String,
+			},
+		},
+	})
+
+	userQuery := &graphql.Field{
+		Type: userType,
+		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+			user, err := GetUserById(userIdOfContext(p))
+			if err != nil {
+				return nil, err
+			}
+			// Type of the nil matters apparently
+			if user == nil {
+				return nil, nil
+			}
+			return user, nil
+		},
+	}
+
 	taskQuery := &graphql.Field{
 		Type: taskType,
 		Args: graphql.FieldConfigArgument{
@@ -521,6 +549,7 @@ func init() {
 			"tasks":  tasksQuery,
 			"habit":  habitQuery,
 			"habits": habitsQuery,
+			"user":   userQuery,
 		},
 	})
 
