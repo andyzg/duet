@@ -396,10 +396,10 @@ func init() {
 			if title, ok := p.Args["title"].(string); ok {
 				attrs["title"] = title
 			}
-			if startDate, ok := p.Args["start_date"].(time.Time); ok {
+			if startDate, ok := p.Args["start_date"].(*time.Time); ok {
 				attrs["start_date"] = startDate
 			}
-			if endDate, ok := p.Args["end_date"].(time.Time); ok {
+			if endDate, ok := p.Args["end_date"].(*time.Time); ok {
 				attrs["end_date"] = endDate
 			}
 			if done, ok := p.Args["done"].(bool); ok {
