@@ -119,7 +119,7 @@ func VerifyToken(tokenString string) (*DuetClaims, error) {
 		return tokenSecret, nil
 	})
 
-	log.Printf("Verifying token %s\n", tokenString)
+	// log.Printf("Verifying token %s\n", tokenString)
 
 	if err != nil {
 		return nil, err

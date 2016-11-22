@@ -18,7 +18,6 @@ var UserIdKey string = "user_id"
 
 func userIdOfContext(p graphql.ResolveParams) uint64 {
 	id := p.Context.Value(UserIdKey).(uint64)
-	log.Printf("Got from context user id \"%s\"\n", id)
 	return id
 }
 
