@@ -31,6 +31,8 @@ func init() {
 				if t != nil {
 					return t.Unix()
 				}
+			case time.Time:
+				return t.Unix()
 			}
 			return nil
 		},
@@ -164,6 +166,12 @@ func init() {
 			"actions": &graphql.Field{
 				Type: graphql.NewList(actionType),
 			},
+			"created_at": &graphql.Field{
+				Type: dateType,
+			},
+			"updated_at": &graphql.Field{
+				Type: dateType,
+			},
 		},
 	})
 
@@ -188,6 +196,12 @@ func init() {
 			},
 			"actions": &graphql.Field{
 				Type: graphql.NewList(actionType),
+			},
+			"created_at": &graphql.Field{
+				Type: dateType,
+			},
+			"updated_at": &graphql.Field{
+				Type: dateType,
 			},
 		},
 	})

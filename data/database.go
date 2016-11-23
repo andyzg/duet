@@ -25,8 +25,8 @@ const (
 
 type Task struct {
 	// Common fields
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 	DeletedAt *time.Time
 	Id        string   `json:"id" gorm:"primary_key;type:uuid;default:uuid_generate_v4()"`
 	Kind      TaskKind `json:"kind" gorm:"not_null"`
