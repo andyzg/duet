@@ -43,13 +43,14 @@ type TodoistSync struct {
 
 func HandleTodoistLogin(w http.ResponseWriter, r *http.Request) {
 	token := r.URL.Query().Get("token")
-	_, err := VerifyToken(token)
+	userId, err := AuthUserId(token)
 	if err != nil {
 		log.Printf("Error verifying token in /oauth/todist/login: %s", err.Error())
 		http.Error(w, "Invalid token. URL must have token as query parameter.", http.StatusUnauthorized)
 		return
 	}
 
+	log.Printf("Redirecting to Todoist for user %d", userId)
 	url := todoistConf.AuthCodeURL(token)
 	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 }
