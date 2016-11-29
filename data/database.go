@@ -6,7 +6,27 @@ import (
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
+
+	"golang.org/x/crypto/bcrypt"
 )
+
+type Database interface {
+	Close() error
+	GetTask(taskId string, userId uint64, kind *TaskKind) (*Task, error)
+	GetTasks(userId uint64, kind *TaskKind) ([]Task, error)
+	AddTask(task *Task, userId uint64) error
+	DeleteTask(taskId string, userId uint64) (bool, error)
+	UpdateTask(taskId string, userId uint64, attrs map[string]interface{}) (*Task, error)
+	CreateUser(username string, password string) (*User, error)
+	GetUserById(id uint64) (*User, error)
+	GetUserByUsername(username string) (*User, error)
+	AddAction(action *Action, userId uint64) error
+	DeleteAction(id string, userId uint64) error
+}
+
+type gormDB struct {
+	*gorm.DB
+}
 
 type TaskKind int
 
@@ -67,22 +87,20 @@ type User struct {
 	Tasks          []Task `json:"-" gorm:"ForeignKey:UserId"`
 }
 
-var db *gorm.DB
-
-func InitDatabase() {
-	var err error
-	db, err = gorm.Open("postgres", "host=localhost user=duet DB.name=duet sslmode=disable")
+func InitDatabase() Database {
+	db, err := gorm.Open("postgres", "host=localhost user=duet DB.name=duet sslmode=disable")
 	if err != nil {
 		panic(err)
 	}
 	db.AutoMigrate(&Task{}, &User{}, &Action{})
+	return gormDB{db}
 }
 
-func CloseDatabase() {
-	db.Close()
+func (db gormDB) Close() error {
+	return db.Close()
 }
 
-func GetTask(taskId string, userId uint64, kind *TaskKind) (*Task, error) {
+func (db gormDB) GetTask(taskId string, userId uint64, kind *TaskKind) (*Task, error) {
 	whereFields := map[string]interface{}{
 		"id":      taskId,
 		"user_id": userId,
@@ -99,7 +117,7 @@ func GetTask(taskId string, userId uint64, kind *TaskKind) (*Task, error) {
 	return &task, nil
 }
 
-func GetTasks(userId uint64, kind *TaskKind) ([]Task, error) {
+func (db gormDB) GetTasks(userId uint64, kind *TaskKind) ([]Task, error) {
 	whereFields := map[string]interface{}{
 		"user_id": userId,
 	}
@@ -115,13 +133,13 @@ func GetTasks(userId uint64, kind *TaskKind) ([]Task, error) {
 	return tasks, nil
 }
 
-func AddTask(task *Task, userId uint64) error {
+func (db gormDB) AddTask(task *Task, userId uint64) error {
 	task.UserId = userId
 	return db.Create(task).Error
 }
 
 // Deletes the task with the given ID and returns whether a row was deleted.
-func DeleteTask(taskId string, userId uint64) (bool, error) {
+func (db gormDB) DeleteTask(taskId string, userId uint64) (bool, error) {
 	task := Task{
 		Id:     taskId,
 		UserId: userId,
@@ -134,7 +152,7 @@ func DeleteTask(taskId string, userId uint64) (bool, error) {
 }
 
 // Updates a task with the given attributes and returns the updated Task if one exists for the ID.
-func UpdateTask(taskId string, userId uint64, attrs map[string]interface{}) (*Task, error) {
+func (db gormDB) UpdateTask(taskId string, userId uint64, attrs map[string]interface{}) (*Task, error) {
 	task := Task{
 		Id: taskId,
 	}
@@ -152,11 +170,25 @@ func UpdateTask(taskId string, userId uint64, attrs map[string]interface{}) (*Ta
 	return &task, nil
 }
 
-func AddUser(user *User) error {
-	return db.Create(user).Error
+func (db gormDB) CreateUser(username string, password string) (*User, error) {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcryptCost)
+	if err != nil {
+		return nil, err
+	}
+
+	user := &User{
+		Username:       username,
+		HashedPassword: hashedPassword,
+	}
+
+	err = db.Create(user).Error
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
 }
 
-func GetUserById(id uint64) (*User, error) {
+func (db gormDB) GetUserById(id uint64) (*User, error) {
 	user := &User{
 		Id: id,
 	}
@@ -166,7 +198,7 @@ func GetUserById(id uint64) (*User, error) {
 	return user, nil
 }
 
-func GetUserByUsername(username string) (*User, error) {
+func (db gormDB) GetUserByUsername(username string) (*User, error) {
 	user := &User{
 		Username: username,
 	}
@@ -176,8 +208,8 @@ func GetUserByUsername(username string) (*User, error) {
 	return user, nil
 }
 
-func AddAction(action *Action, userId uint64) error {
-	task, err := GetTask(action.TaskId, userId, nil)
+func (db gormDB) AddAction(action *Action, userId uint64) error {
+	task, err := db.GetTask(action.TaskId, userId, nil)
 	if task == nil {
 		return fmt.Errorf("Task %s does not exist for user %d", action.TaskId, userId)
 	}
@@ -187,14 +219,14 @@ func AddAction(action *Action, userId uint64) error {
 	return db.Create(action).Error
 }
 
-func DeleteAction(id string, userId uint64) error {
+func (db gormDB) DeleteAction(id string, userId uint64) error {
 	action := &Action{
 		Id: id,
 	}
 	if err := db.Where(action).First(action).Error; err != nil {
 		return err
 	}
-	task, err := GetTask(action.TaskId, userId, nil)
+	task, err := db.GetTask(action.TaskId, userId, nil)
 	if err != nil {
 		return err
 	}

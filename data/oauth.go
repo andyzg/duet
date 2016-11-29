@@ -41,62 +41,66 @@ type TodoistSync struct {
 	Items     []TodoistItem `json:"items"`
 }
 
-func HandleTodoistLogin(w http.ResponseWriter, r *http.Request) {
-	token := r.URL.Query().Get("token")
-	userId, err := AuthUserId(token)
-	if err != nil {
-		log.Printf("Error verifying token in /oauth/todist/login: %s", err.Error())
-		http.Error(w, "Invalid token. URL must have token as query parameter.", http.StatusUnauthorized)
-		return
-	}
+func HandleTodoistLogin(db Database) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		token := r.URL.Query().Get("token")
+		userId, err := AuthUserId(token)
+		if err != nil {
+			log.Printf("Error verifying token in /oauth/todist/login: %s", err.Error())
+			http.Error(w, "Invalid token. URL must have token as query parameter.", http.StatusUnauthorized)
+			return
+		}
 
-	log.Printf("Redirecting to Todoist for user %d", userId)
-	url := todoistConf.AuthCodeURL(token)
-	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
+		log.Printf("Redirecting to Todoist for user %d", userId)
+		url := todoistConf.AuthCodeURL(token)
+		http.Redirect(w, r, url, http.StatusTemporaryRedirect)
+	})
 }
 
-func HandleTodoistCallback(w http.ResponseWriter, r *http.Request) {
-	token := r.FormValue("state")
-	userId, err := AuthUserId(token)
-	if err != nil {
-		log.Printf("Error verifying token in /oauth/todoist/callback: %s", err.Error())
-		http.Error(w, "Invalid Oauth2 state", http.StatusUnauthorized)
-		return
-	}
+func HandleTodoistCallback(db Database) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		token := r.FormValue("state")
+		userId, err := AuthUserId(token)
+		if err != nil {
+			log.Printf("Error verifying token in /oauth/todoist/callback: %s", err.Error())
+			http.Error(w, "Invalid Oauth2 state", http.StatusUnauthorized)
+			return
+		}
 
-	code := r.FormValue("code")
-	log.Printf("Retrieved Todoist code '%s'", code)
+		code := r.FormValue("code")
+		log.Printf("Retrieved Todoist code '%s'", code)
 
-	v := url.Values{}
-	v.Set("code", code)
-	v.Set("client_id", todoistConf.ClientID)
-	v.Set("client_secret", todoistConf.ClientSecret)
-	response, err := http.PostForm(todoistConf.Endpoint.TokenURL, v)
-	if err != nil {
-		log.Printf("Todoist code exchange failed with '%s'", err)
-		http.Error(w, "Todoist code exchange failed", http.StatusUnauthorized)
-		return
-	}
+		v := url.Values{}
+		v.Set("code", code)
+		v.Set("client_id", todoistConf.ClientID)
+		v.Set("client_secret", todoistConf.ClientSecret)
+		response, err := http.PostForm(todoistConf.Endpoint.TokenURL, v)
+		if err != nil {
+			log.Printf("Todoist code exchange failed with '%s'", err)
+			http.Error(w, "Todoist code exchange failed", http.StatusUnauthorized)
+			return
+		}
 
-	accessToken := AccessTokenResponse{}
-	json.NewDecoder(response.Body).Decode(&accessToken)
-	response.Body.Close()
-	if accessToken.Error != "" {
-		log.Printf("Todoist access token JSON contains error '%s'", accessToken.Error)
-		http.Error(w, "Todoist code exchange failed", http.StatusUnauthorized)
-		return
-	}
-	log.Printf("Retrieved Todoist access token '%s'", accessToken.AccessToken)
+		accessToken := AccessTokenResponse{}
+		json.NewDecoder(response.Body).Decode(&accessToken)
+		response.Body.Close()
+		if accessToken.Error != "" {
+			log.Printf("Todoist access token JSON contains error '%s'", accessToken.Error)
+			http.Error(w, "Todoist code exchange failed", http.StatusUnauthorized)
+			return
+		}
+		log.Printf("Retrieved Todoist access token '%s'", accessToken.AccessToken)
 
-	err = SyncTodoist(userId, accessToken.AccessToken)
-	if err != nil {
-		log.Printf("Todoist syncing failed with error '%s'", err)
-		http.Error(w, "Failed to sync Todoist tasks", http.StatusUnauthorized)
-		return
-	}
+		err = SyncTodoist(db, userId, accessToken.AccessToken)
+		if err != nil {
+			log.Printf("Todoist syncing failed with error '%s'", err)
+			http.Error(w, "Failed to sync Todoist tasks", http.StatusUnauthorized)
+			return
+		}
+	})
 }
 
-func SyncTodoist(userId uint64, oauthToken string) error {
+func SyncTodoist(db Database, userId uint64, oauthToken string) error {
 	v := url.Values{}
 	v.Set("token", oauthToken)
 	v.Set("sync_token", "*")
@@ -132,7 +136,7 @@ func SyncTodoist(userId uint64, oauthToken string) error {
 			Done:    item.Checked == 1,
 			EndDate: endDate,
 		}
-		err = AddTask(&task, userId)
+		err = db.AddTask(&task, userId)
 		if err != nil {
 			log.Printf("Error adding task: '%s'", err)
 		} else {

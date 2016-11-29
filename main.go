@@ -14,13 +14,13 @@ import (
 )
 
 func main() {
-	data.InitDatabase()
-	defer data.CloseDatabase()
+	db := data.InitDatabase()
+	defer db.Close()
 
 	graphqlHandler := handler.New(&handler.Config{
-		Schema: &data.Schema,
+		Schema: data.GetSchema(db),
 		Pretty: true,
-		Log:    true,
+		Log:    false,
 	})
 
 	authGraphqlHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -48,9 +48,9 @@ func main() {
 	restApi.Use(rest.DefaultDevStack...)
 
 	restRouter, err := rest.MakeRouter(
-		rest.Post("/login", data.ServeLogin),
-		rest.Post("/signup", data.ServeCreateUser),
-		rest.Get("/verify", data.ServeVerifyToken),
+		rest.Post("/login", data.ServeLogin(db)),
+		rest.Post("/signup", data.ServeCreateUser(db)),
+		rest.Get("/verify", data.ServeVerifyToken(db)),
 	)
 	if err != nil {
 		log.Fatalf("rest.MakeRouter failed, %v", err)
@@ -60,8 +60,8 @@ func main() {
 	http.HandleFunc("/", graphiql.ServeGraphiQL)
 	http.Handle("/rest/", http.StripPrefix("/rest", restApi.MakeHandler()))
 	http.Handle("/graphql", authGraphqlHandler)
-	http.Handle("/oauth/todoist/login", http.HandlerFunc(data.HandleTodoistLogin))
-	http.Handle("/oauth/todoist/callback", http.HandlerFunc(data.HandleTodoistCallback))
+	http.Handle("/oauth/todoist/login", data.HandleTodoistLogin(db))
+	http.Handle("/oauth/todoist/callback", data.HandleTodoistCallback(db))
 
 	err = http.ListenAndServe(":8080", nil)
 	if err != nil {

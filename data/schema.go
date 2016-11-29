@@ -1,7 +1,6 @@
 package data
 
 import (
-	"log"
 	"strconv"
 	"time"
 
@@ -9,19 +8,14 @@ import (
 	"github.com/graphql-go/graphql/language/ast"
 )
 
-var taskType *graphql.Object
-var habitType *graphql.Object
-
-var Schema graphql.Schema
-
-var UserIdKey string = "user_id"
+const UserIdKey string = "user_id"
 
 func userIdOfContext(p graphql.ResolveParams) uint64 {
 	id := p.Context.Value(UserIdKey).(uint64)
 	return id
 }
 
-func init() {
+func GetSchema(db Database) *graphql.Schema {
 	dateType := graphql.NewScalar(graphql.ScalarConfig{
 		Name:        "Date",
 		Description: "Date and time",
@@ -116,35 +110,7 @@ func init() {
 		},
 	})
 
-	baseTaskInterface := graphql.NewInterface(graphql.InterfaceConfig{
-		Name:        "BaseTask",
-		Description: "Fields common to task and habit",
-		Fields: graphql.Fields{
-			"id": &graphql.Field{
-				Type: graphql.ID,
-			},
-			"title": &graphql.Field{
-				Type: graphql.String,
-			},
-			"actions": &graphql.Field{
-				Type: graphql.NewList(actionType),
-			},
-		},
-		ResolveType: func(p graphql.ResolveTypeParams) *graphql.Object {
-			task, ok := p.Value.(Task)
-			if !ok {
-				log.Printf("Failed to get task %v", task)
-				return taskType
-			}
-			if task.Kind == TaskEnum {
-				return taskType
-			}
-			return habitType
-		},
-	})
-	_ = baseTaskInterface
-
-	taskType = graphql.NewObject(graphql.ObjectConfig{
+	taskType := graphql.NewObject(graphql.ObjectConfig{
 		Name:        "Task",
 		Description: "A TODO task",
 		Fields: graphql.Fields{
@@ -175,7 +141,7 @@ func init() {
 		},
 	})
 
-	habitType = graphql.NewObject(graphql.ObjectConfig{
+	habitType := graphql.NewObject(graphql.ObjectConfig{
 		Name:        "Habit",
 		Description: "A recurring habit",
 		Fields: graphql.Fields{
@@ -222,7 +188,7 @@ func init() {
 	userQuery := &graphql.Field{
 		Type: userType,
 		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-			user, err := GetUserById(userIdOfContext(p))
+			user, err := db.GetUserById(userIdOfContext(p))
 			if err != nil {
 				return nil, err
 			}
@@ -245,7 +211,7 @@ func init() {
 		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 			id := p.Args["id"].(string)
 			kind := TaskEnum
-			task, err := GetTask(id, userIdOfContext(p), &kind)
+			task, err := db.GetTask(id, userIdOfContext(p), &kind)
 			if err != nil {
 				return nil, err
 			}
@@ -268,7 +234,7 @@ func init() {
 		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 			id := p.Args["id"].(string)
 			kind := HabitEnum
-			task, err := GetTask(id, userIdOfContext(p), &kind)
+			task, err := db.GetTask(id, userIdOfContext(p), &kind)
 			if err != nil {
 				return nil, err
 			}
@@ -284,7 +250,7 @@ func init() {
 		Type: graphql.NewList(taskType),
 		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 			kind := TaskEnum
-			return GetTasks(userIdOfContext(p), &kind)
+			return db.GetTasks(userIdOfContext(p), &kind)
 		},
 	}
 
@@ -292,7 +258,7 @@ func init() {
 		Type: graphql.NewList(habitType),
 		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 			kind := HabitEnum
-			return GetTasks(userIdOfContext(p), &kind)
+			return db.GetTasks(userIdOfContext(p), &kind)
 		},
 	}
 
@@ -331,7 +297,7 @@ func init() {
 				Kind:      TaskEnum,
 			}
 
-			if err := AddTask(newTask, userIdOfContext(p)); err != nil {
+			if err := db.AddTask(newTask, userIdOfContext(p)); err != nil {
 				return nil, err
 			}
 			return newTask, nil
@@ -373,7 +339,7 @@ func init() {
 				Kind:      HabitEnum,
 			}
 
-			if err := AddTask(newTask, userIdOfContext(p)); err != nil {
+			if err := db.AddTask(newTask, userIdOfContext(p)); err != nil {
 				return nil, err
 			}
 			return newTask, nil
@@ -399,7 +365,7 @@ func init() {
 		},
 		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 			id, _ := p.Args["id"].(string)
-			taskDeleted, err := DeleteTask(id, userIdOfContext(p))
+			taskDeleted, err := db.DeleteTask(id, userIdOfContext(p))
 			if err != nil {
 				return nil, err
 			}
@@ -448,7 +414,7 @@ func init() {
 				attrs["done"] = done
 			}
 
-			return UpdateTask(id, userIdOfContext(p), attrs)
+			return db.UpdateTask(id, userIdOfContext(p), attrs)
 		},
 	}
 
@@ -489,7 +455,7 @@ func init() {
 				attrs["done"] = done
 			}
 
-			return UpdateTask(id, userIdOfContext(p), attrs)
+			return db.UpdateTask(id, userIdOfContext(p), attrs)
 		},
 	}
 
@@ -522,7 +488,7 @@ func init() {
 				TaskId: taskId,
 			}
 
-			if err := AddAction(newAction, userIdOfContext(p)); err != nil {
+			if err := db.AddAction(newAction, userIdOfContext(p)); err != nil {
 				return nil, err
 			}
 			return newAction, nil
@@ -549,7 +515,7 @@ func init() {
 		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 			id, _ := p.Args["id"].(string)
 
-			if err := DeleteAction(id, userIdOfContext(p)); err != nil {
+			if err := db.DeleteAction(id, userIdOfContext(p)); err != nil {
 				return nil, err
 			}
 			return id, nil
@@ -581,11 +547,13 @@ func init() {
 	})
 
 	var err error
-	Schema, err = graphql.NewSchema(graphql.SchemaConfig{
+	schema, err := graphql.NewSchema(graphql.SchemaConfig{
 		Query:    queryType,
 		Mutation: mutationType,
 	})
 	if err != nil {
 		panic(err)
 	}
+
+	return &schema
 }
