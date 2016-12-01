@@ -87,8 +87,8 @@ type User struct {
 	Tasks          []Task `json:"-" gorm:"ForeignKey:UserId"`
 }
 
-func InitDatabase() Database {
-	db, err := gorm.Open("postgres", "host=localhost user=duet DB.name=duet sslmode=disable")
+func InitDatabase(dialect string, host string, user string, dbName string) Database {
+	db, err := gorm.Open(dialect, fmt.Sprintf("host=%s user=%s DB.name=%s sslmode=disable", host, user, dbName))
 	if err != nil {
 		panic(err)
 	}

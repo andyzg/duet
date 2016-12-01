@@ -14,7 +14,7 @@ import (
 )
 
 func main() {
-	db := data.InitDatabase()
+	db := data.InitDatabase("postgres", "localhost", "duet", "duet")
 	defer db.Close()
 
 	graphqlHandler := handler.New(&handler.Config{
