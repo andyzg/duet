@@ -36,7 +36,7 @@ func ServeCreateUser(db Database) func(rest.ResponseWriter, *rest.Request) {
 		userAndPass := usernameAndPassword{}
 		err := r.DecodeJsonPayload(&userAndPass)
 		if err != nil {
-			rest.Error(w, err.Error(), http.StatusInternalServerError)
+			rest.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
@@ -58,43 +58,47 @@ func ServeLogin(db Database) func(rest.ResponseWriter, *rest.Request) {
 		userAndPass := usernameAndPassword{}
 		err := r.DecodeJsonPayload(&userAndPass)
 		if err != nil {
-			rest.Error(w, err.Error(), http.StatusInternalServerError)
+			rest.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		user, err := db.GetUserByUsername(userAndPass.Username)
+		tokenString, err := Login(db, userAndPass.Username, userAndPass.Password)
 		if err != nil {
-			// TODO don't leak info
 			rest.Error(w, err.Error(), http.StatusUnauthorized)
-			return
-		}
-		err = bcrypt.CompareHashAndPassword(user.HashedPassword, []byte(userAndPass.Password))
-		if err != nil {
-			// TODO don't leak info
-			rest.Error(w, err.Error(), http.StatusUnauthorized)
-			return
-		}
-
-		log.Printf("Username: %s, Password: %s\n", userAndPass.Username, userAndPass.Password)
-
-		token := jwt.NewWithClaims(jwt.SigningMethodHS256, DuetClaims{
-			jwt.StandardClaims{
-				Subject:  strconv.FormatUint(user.Id, 10),
-				Issuer:   "Duet",
-				Audience: "https://api.helloduet.com",
-			},
-		})
-
-		tokenString, err := token.SignedString(tokenSecret)
-		if err != nil {
-			rest.Error(w, err.Error(), http.StatusInternalServerError)
-			return
 		}
 
 		w.WriteJson(map[string]string{
 			"token": tokenString,
 		})
 	}
+}
+
+func Login(db Database, username string, password string) (string, error) {
+	user, err := db.GetUserByUsername(username)
+	if err != nil {
+		return "", err
+	}
+	err = bcrypt.CompareHashAndPassword(user.HashedPassword, []byte(password))
+	if err != nil {
+		return "", err
+	}
+
+	// TODO don't log password
+	log.Printf("Username: %s, Password: %s\n", username, password)
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, DuetClaims{
+		jwt.StandardClaims{
+			Subject:  strconv.FormatUint(user.Id, 10),
+			Issuer:   "Duet",
+			Audience: "https://api.helloduet.com",
+		},
+	})
+
+	tokenString, err := token.SignedString(tokenSecret)
+	if err != nil {
+		return "", err
+	}
+	return tokenString, nil
 }
 
 func ServeVerifyToken(db Database) func(rest.ResponseWriter, *rest.Request) {
