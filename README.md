@@ -14,7 +14,8 @@ Also install `godep` by running `go get github.com/tools/godep`.
 
 Install postgres. Now create a database and enable the `uuid-ossp` extension:
 ```
-createdb duet
+createuser duet -d
+createdb duet -O duet
 psql -d duet --command='CREATE EXTENSION "uuid-ossp"'
 ```
 
