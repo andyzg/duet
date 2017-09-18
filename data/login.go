@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+        "os"
 
 	"github.com/ant0ine/go-json-rest/rest"
 	"github.com/dgrijalva/jwt-go"
@@ -27,7 +28,7 @@ type DuetClaims struct {
 	jwt.StandardClaims
 }
 
-var tokenSecret []byte = []byte("someSecret")
+var tokenSecret []byte = []byte(os.Getenv("JWT_SECRET"))
 
 var bcryptCost int = 10
 
